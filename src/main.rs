@@ -8,7 +8,10 @@ use glium::glutin::{Event, ElementState, VirtualKeyCode};
 const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");
 const FRAGMENT_SRC: &'static str = include_str!("shaders/default.frag");
 
-use ocl::{util, core, ProQue, Buffer};
+use ocl::{util, core, ProQue, Buffer, Device, Platform, Queue, Context, Program as ProgramCl};
+use ocl::core::{ContextProperties, DeviceType};
+use ocl::builders::DeviceSpecifier;
+use ocl::cl_h::CL_DEVICE_TYPE_GPU;
 
 const KERNEL_SRC: &'static str = include_str!("kernels/test.cl");
 
@@ -52,28 +55,46 @@ fn main() {
         ]
     };
 
+    let properties = ContextProperties::new().gl_context();
+
+    let context_cl = Context::new(Some(properties), Some(DeviceSpecifier::First),
+                    None, None).unwrap();
+
     // println!("get_id: {:?}", vertex_buffer.get_id());
     // Create a big ball of OpenCL-ness (see ProQue and ProQueBuilder docs for info):
-    let ocl_pq = ProQue::builder()
-        .src(KERNEL_SRC)
-        .dims([DATA_SET_SIZE])
-        .build().expect("Build ProQue");
+    // let ocl_pq = ProQue::builder()
+    //     .src(KERNEL_SRC)
+    //     .dims([DATA_SET_SIZE]) // don't understand
+    //     .build().expect("Build ProQue");
+
+    let device_cl = Device::first(*Platform::list().first().unwrap());
+    let queue_cl = Queue::new(&context_cl, device_cl).unwrap();
+
+    let program_cl = ProgramCl::builder().src(KERNEL_SRC).build(&context_cl).unwrap();
+
+    let pq_cl = ProQue::new(context_cl, queue_cl, program_cl, Some([DATA_SET_SIZE]));
 
     // Create a source buffer and initialize it with random floats between 0.0
     // and 20.0 using a temporary init vector, `vec_source`:
-    let vec_source = util::scrambled_vec((0.0, 20.0), ocl_pq.dims().to_len());
-    let source_buffer = Buffer::new(ocl_pq.queue(), Some(core::MEM_READ_WRITE |
-        core::MEM_COPY_HOST_PTR), ocl_pq.dims().clone(), Some(&vec_source)).unwrap();
+    // let vec_source = util::scrambled_vec((0.0, 20.0), ocl_pq.dims().to_len());
+    // let vertex_buffer_cl = Buffer::new(ocl_pq.queue(), Some(core::MEM_READ_WRITE |
+    //     core::MEM_COPY_HOST_PTR), ocl_pq.dims().clone(), Some(&vec_source)).unwrap();
 
-    // Create another empty buffer and vector for results:
-    let mut vec_result = vec![0.0f32; DATA_SET_SIZE];
-    let result_buffer: Buffer<f32> = ocl_pq.create_buffer().unwrap();
+
+    let vertex_buffer_cl = Buffer::new().unwrap();
+
+    // create_from_gl_buffer(
+    //         context: &Context,
+    //         gl_object: cl_GLuint,
+    //         flags: MemFlags
+    //     ) -> OclResult<Mem>
+
+    // ContextProperty::CglSharegroupKhr
 
     // Create a kernel with arguments corresponding to those in the kernel:
-    let kern = ocl_pq.create_kernel("multiply_by_scalar").unwrap()
-        .arg_scl(COEFF)
-        .arg_buf(&source_buffer)
-        .arg_buf(&result_buffer);
+    let kern = pq_cl.create_kernel("add_to_each").unwrap()
+        .arg_scl(0.2)
+        .arg_buf(&vertex_buffer_cl);
 
     println!("Kernel global work size: {:?}", kern.get_gws());
 
@@ -81,16 +102,7 @@ fn main() {
     kern.enq().unwrap();
 
     // Read results from the device into result_buffer's local vector:
-    result_buffer.read(&mut vec_result).enq().unwrap();
-
-    // Check results and print the first 20:
-    for idx in 0..DATA_SET_SIZE {
-        if idx < RESULTS_TO_PRINT {
-            println!("source[{idx}]: {:.03}, \t coeff: {}, \tresult[{idx}]: {}",
-            vec_source[idx], COEFF, vec_result[idx], idx = idx);
-        }
-        assert_eq!(vec_source[idx] * COEFF, vec_result[idx]);
-    }
+    // result_buffer.read(&mut vec_result).enq().unwrap();
 
     for event in display.wait_events() {
         let mut frame = display.draw();

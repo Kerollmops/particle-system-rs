@@ -3,7 +3,7 @@ name = "particle-system-rs"
 version = "0.1.0"
 dependencies = [
  "glium 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ocl 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ocl 0.10.0 (git+https://github.com/cogciprocate/ocl.git?rev=2d1d459)",
 ]
 
 [[package]]
@@ -370,8 +370,8 @@ dependencies = [
 
 [[package]]
 name = "ocl"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.10.0"
+source = "git+https://github.com/cogciprocate/ocl.git?rev=2d1d459#2d1d4595963a2a297af94695826b9844d6c6ad06"
 dependencies = [
  "bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum_primitive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

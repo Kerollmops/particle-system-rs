@@ -5,4 +5,5 @@ authors = ["Clément Renault <renault.cle@gmail.com>"]
 
 [dependencies]
 glium = "0.14"
-ocl = "0.9"
+# ocl = "0.9"
+ocl = { git = "https://github.com/cogciprocate/ocl.git", rev = "2d1d459" }
