@@ -9,7 +9,7 @@ use glium::glutin::{Event, ElementState, VirtualKeyCode};
 const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");
 const FRAGMENT_SRC: &'static str = include_str!("shaders/default.frag");
 
-use ocl::{util, core, ProQue, Buffer, Device, Platform, Queue, Context, Program as ProgramCl};
+use ocl::{core, ProQue, Buffer, Device, Platform, Context, Program as ProgramCl};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
 use ocl::cl_h::CL_DEVICE_TYPE_GPU;
@@ -84,22 +84,25 @@ fn main() {
                                             vertex_buffer.get_id()
                                         ).unwrap();
 
+    let mut local_vector = vec![0.0f32; 5 * 3];
+
     // Acquire buffer
     vertex_buffer_cl.cmd().gl_acquire().enq().unwrap();
 
-    let kern = pq_cl.create_kernel("add_to_each").unwrap()
-                .arg_buf(&vertex_buffer_cl)
-                .arg_scl(0.2);
+    let kern = pq_cl.create_kernel("add_to_each").unwrap();
 
     println!("Kernel global work size: {:?}", kern.get_gws());
 
-    let mut local_vector = vec![0.0f32; 5 * 3];
     vertex_buffer_cl.read(&mut local_vector).enq().unwrap();
-
-    println!("data: {:?}", local_vector);
+    println!("before: {:?}", local_vector);
 
     // Enqueue kernel:
-    kern.enq().unwrap();
+    kern.arg_buf(&vertex_buffer_cl)
+        .arg_scl(0.2f32)
+        .enq().unwrap();
+
+    vertex_buffer_cl.read(&mut local_vector).enq().unwrap();
+    println!("after: {:?}", local_vector);
 
     // Release buffer
     vertex_buffer_cl.cmd().gl_release().enq().unwrap();
