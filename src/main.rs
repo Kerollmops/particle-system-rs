@@ -75,12 +75,12 @@ fn main() {
                 .context(context_cl)
                 .prog_bldr(program_builder_cl)
                 .device(device_cl)
-                .dims([5])
+                .dims([5 * 3])
                 .build().unwrap();
 
     let vertex_buffer_cl: Buffer<f32> = Buffer::from_gl_buffer(&pq_cl,
                                             Some(core::MEM_READ_WRITE),
-                                            [5],
+                                            [5 * 3],
                                             vertex_buffer.get_id()
                                         ).unwrap();
 
@@ -89,9 +89,14 @@ fn main() {
 
     let kern = pq_cl.create_kernel("add_to_each").unwrap()
                 .arg_buf(&vertex_buffer_cl)
-                .arg_scl(2.0);
+                .arg_scl(0.2);
 
     println!("Kernel global work size: {:?}", kern.get_gws());
+
+    let mut local_vector = vec![0.0f32; 5 * 3];
+    vertex_buffer_cl.read(&mut local_vector).enq().unwrap();
+
+    println!("data: {:?}", local_vector);
 
     // Enqueue kernel:
     kern.enq().unwrap();
