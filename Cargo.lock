@@ -2,8 +2,9 @@
 name = "particle-system-rs"
 version = "0.1.0"
 dependencies = [
+ "cgl 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ocl 0.10.0 (git+https://github.com/cogciprocate/ocl.git?rev=2d1d459)",
+ "ocl 0.10.0 (git+https://github.com/Kerosene2000/ocl.git?branch=cgl_context)",
 ]
 
 [[package]]
@@ -61,7 +62,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "cgl"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "gleam 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -209,7 +210,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "android_glue 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "cgl 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cgl 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "cocoa 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "core-foundation 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "core-graphics 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -371,7 +372,7 @@ dependencies = [
 [[package]]
 name = "ocl"
 version = "0.10.0"
-source = "git+https://github.com/cogciprocate/ocl.git?rev=2d1d459#2d1d4595963a2a297af94695826b9844d6c6ad06"
+source = "git+https://github.com/Kerosene2000/ocl.git?branch=cgl_context#a2e5480d13d385c61b1ebabf9761dd27de379a1d"
 dependencies = [
  "bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum_primitive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

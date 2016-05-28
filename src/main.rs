@@ -1,5 +1,6 @@
 #[macro_use] extern crate glium;
 extern crate ocl;
+extern crate cgl;
 
 use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program, GlObject};
 use glium::index::{NoIndices, PrimitiveType};
@@ -9,11 +10,13 @@ const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");
 const FRAGMENT_SRC: &'static str = include_str!("shaders/default.frag");
 
 use ocl::{util, core, ProQue, Buffer, Device, Platform, Queue, Context, Program as ProgramCl};
-use ocl::core::{ContextProperties, DeviceType};
+use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
 use ocl::cl_h::CL_DEVICE_TYPE_GPU;
 
 const KERNEL_SRC: &'static str = include_str!("kernels/test.cl");
+
+use cgl::{CGLGetCurrentContext, CGLGetShareGroup};
 
 // Number of results to print out:
 const RESULTS_TO_PRINT: usize = 20;
@@ -22,11 +25,14 @@ const RESULTS_TO_PRINT: usize = 20;
 const DATA_SET_SIZE: usize = 2 << 20;
 const COEFF: f32 = 5432.1;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
 struct Particle {
     position: [f32; 2],
     color: [f32; 3], // to delete
 }
+
+// struct ParticlePosition
+// struct ParticleVelocity
 
 implement_vertex!(Particle, position, color);
 
@@ -55,54 +61,52 @@ fn main() {
         ]
     };
 
-    let properties = ContextProperties::new().gl_context();
+    let cgl_current_ctx = unsafe { CGLGetCurrentContext() };
+    let cgl_share_grp = unsafe { CGLGetShareGroup(cgl_current_ctx) };
+    let properties = ContextProperties::new().cgl_sharegroup(cgl_share_grp);
 
-    let context_cl = Context::new(Some(properties), Some(DeviceSpecifier::First),
-                    None, None).unwrap();
+    let platform_cl = Platform::default();
+    let device_type_cl = DeviceType::from_bits_truncate(CL_DEVICE_TYPE_GPU);
+    let devices_cl = Device::list(&platform_cl, Some(device_type_cl));
+    let device_cl = devices_cl.first().expect("No device with specified types found.");
 
-    // println!("get_id: {:?}", vertex_buffer.get_id());
-    // Create a big ball of OpenCL-ness (see ProQue and ProQueBuilder docs for info):
-    // let ocl_pq = ProQue::builder()
-    //     .src(KERNEL_SRC)
-    //     .dims([DATA_SET_SIZE]) // don't understand
-    //     .build().expect("Build ProQue");
+    println!("device: {:?}", device_cl.info(DeviceInfo::Name));
 
-    let device_cl = Device::first(*Platform::list().first().unwrap());
-    let queue_cl = Queue::new(&context_cl, device_cl).unwrap();
+    let context_cl = Context::builder()
+                    .properties(properties)
+                    .devices(DeviceSpecifier::Single(*device_cl))
+                    .build().unwrap();
 
-    let program_cl = ProgramCl::builder().src(KERNEL_SRC).build(&context_cl).unwrap();
+    let program_builder_cl = ProgramCl::builder().src(KERNEL_SRC);
+    let pq_cl = ProQue::builder()
+                .context(context_cl)
+                .prog_bldr(program_builder_cl)
+                .device(device_cl)
+                .dims([5])
+                .build().unwrap();
 
-    let pq_cl = ProQue::new(context_cl, queue_cl, program_cl, Some([DATA_SET_SIZE]));
+    let vertex_buffer_cl: Buffer<f32> = Buffer::from_gl_buffer(&pq_cl,
+                                            Some(core::MEM_READ_WRITE),
+                                            [5],
+                                            vertex_buffer.get_id()
+                                        ).unwrap();
 
-    // Create a source buffer and initialize it with random floats between 0.0
-    // and 20.0 using a temporary init vector, `vec_source`:
-    // let vec_source = util::scrambled_vec((0.0, 20.0), ocl_pq.dims().to_len());
-    // let vertex_buffer_cl = Buffer::new(ocl_pq.queue(), Some(core::MEM_READ_WRITE |
-    //     core::MEM_COPY_HOST_PTR), ocl_pq.dims().clone(), Some(&vec_source)).unwrap();
+    // Acquire buffer
+    vertex_buffer_cl.cmd().gl_acquire().enq().unwrap();
 
+    // let kern = pq_cl.create_kernel("add_to_each").unwrap()
+    //             .arg_scl(0.2)
+    //             .arg_buf(&vertex_buffer_cl);
 
-    let vertex_buffer_cl = Buffer::new().unwrap();
-
-    // create_from_gl_buffer(
-    //         context: &Context,
-    //         gl_object: cl_GLuint,
-    //         flags: MemFlags
-    //     ) -> OclResult<Mem>
-
-    // ContextProperty::CglSharegroupKhr
-
-    // Create a kernel with arguments corresponding to those in the kernel:
-    let kern = pq_cl.create_kernel("add_to_each").unwrap()
-        .arg_scl(0.2)
-        .arg_buf(&vertex_buffer_cl);
-
-    println!("Kernel global work size: {:?}", kern.get_gws());
+    // println!("Kernel global work size: {:?}", kern.get_gws());
 
     // Enqueue kernel:
-    kern.enq().unwrap();
+    // kern.enq().unwrap();
 
-    // Read results from the device into result_buffer's local vector:
     // result_buffer.read(&mut vec_result).enq().unwrap();
+
+    // Release buffer
+    // vertex_buffer_cl.cmd().gl_release().enq().unwrap();
 
     for event in display.wait_events() {
         let mut frame = display.draw();
