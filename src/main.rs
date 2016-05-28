@@ -2,6 +2,12 @@
 extern crate ocl;
 extern crate cgl;
 
+mod particles;
+mod point;
+
+use particles::Particles;
+use point::Point;
+
 use glium::{DisplayBuild, Surface, VertexBuffer, IndexBuffer, Program, GlObject};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
@@ -14,18 +20,15 @@ use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
 use ocl::cl_h::CL_DEVICE_TYPE_GPU;
 
-const KERNEL_SRC: &'static str = include_str!("kernels/test.cl");
+const KERNEL_SRC: &'static str = include_str!("kernels/particle_management.cl");
 
 use cgl::{CGLGetCurrentContext, CGLGetShareGroup};
 
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Copy, Clone)]
 struct Particle {
     position: [f32; 2],
     color: [f32; 3], // to delete
 }
-
-// struct ParticlePosition
-// struct ParticleVelocity
 
 implement_vertex!(Particle, position, color);
 
@@ -89,15 +92,18 @@ fn main() {
     // Acquire buffer
     vertex_buffer_cl.cmd().gl_acquire().enq().unwrap();
 
-    let kern = pq_cl.create_kernel("add_to_each").unwrap();
-
-    println!("Kernel global work size: {:?}", kern.get_gws());
-
     vertex_buffer_cl.read(&mut local_vector).enq().unwrap();
     println!("before: {:?}", local_vector);
 
     // Enqueue kernel:
+    let kern = pq_cl.create_kernel("add_to_each").unwrap();
+    println!("Kernel global work size: {:?}", kern.get_gws());
     kern.arg_buf(&vertex_buffer_cl)
+        .arg_scl(0.2f32)
+        .enq().unwrap();
+
+    let kern2 = pq_cl.create_kernel("add_to_each").unwrap();
+    kern2.arg_buf(&vertex_buffer_cl)
         .arg_scl(0.2f32)
         .enq().unwrap();
 
@@ -106,6 +112,12 @@ fn main() {
 
     // Release buffer
     vertex_buffer_cl.cmd().gl_release().enq().unwrap();
+
+    let mut particles = Particles::new(&display, pq_cl, 1_000_000);
+    particles.init_sphere();
+
+    let grav_point = Point::new(0.0, 0.0, 0.0);
+    particles.update(grav_point);
 
     for event in display.wait_events() {
         let mut frame = display.draw();
