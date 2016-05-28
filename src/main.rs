@@ -18,13 +18,6 @@ const KERNEL_SRC: &'static str = include_str!("kernels/test.cl");
 
 use cgl::{CGLGetCurrentContext, CGLGetShareGroup};
 
-// Number of results to print out:
-const RESULTS_TO_PRINT: usize = 20;
-
-// Our arbitrary data set size and coefficent:
-const DATA_SET_SIZE: usize = 2 << 20;
-const COEFF: f32 = 5432.1;
-
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
 struct Particle {
     position: [f32; 2],
@@ -94,19 +87,17 @@ fn main() {
     // Acquire buffer
     vertex_buffer_cl.cmd().gl_acquire().enq().unwrap();
 
-    // let kern = pq_cl.create_kernel("add_to_each").unwrap()
-    //             .arg_scl(0.2)
-    //             .arg_buf(&vertex_buffer_cl);
+    let kern = pq_cl.create_kernel("add_to_each").unwrap()
+                .arg_buf(&vertex_buffer_cl)
+                .arg_scl(2.0);
 
-    // println!("Kernel global work size: {:?}", kern.get_gws());
+    println!("Kernel global work size: {:?}", kern.get_gws());
 
     // Enqueue kernel:
-    // kern.enq().unwrap();
-
-    // result_buffer.read(&mut vec_result).enq().unwrap();
+    kern.enq().unwrap();
 
     // Release buffer
-    // vertex_buffer_cl.cmd().gl_release().enq().unwrap();
+    vertex_buffer_cl.cmd().gl_release().enq().unwrap();
 
     for event in display.wait_events() {
         let mut frame = display.draw();
