@@ -64,9 +64,7 @@ fn main() {
         // println!("caca");
 
         particles.update(grav_point);
-
         let mut frame = display.draw();
-
         frame.clear_color_srgb_and_depth((0.17578125, 0.17578125, 0.17578125, 1.0), 1.0);
         particles.draw(&mut frame);
     }
