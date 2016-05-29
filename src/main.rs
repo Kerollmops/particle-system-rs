@@ -2,6 +2,8 @@
 extern crate ocl;
 extern crate cgl;
 #[macro_use] extern crate colorify;
+extern crate fps_counter;
+extern crate hertz;
 mod particles;
 mod point;
 
@@ -14,13 +16,17 @@ use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
 use cgl::{CGLGetCurrentContext, CGLGetShareGroup};
+use fps_counter::FPSCounter;
 use particles::Particles;
 use point::Point;
+
+const GRAY_BACK: (f32, f32, f32, f32) = (0.17578125, 0.17578125, 0.17578125, 1.0);
+const MAX_FPS: usize = 60;
 
 fn main() {
     let display = glium::glutin::WindowBuilder::new()
                     .with_dimensions(1024, 768)
-                    .with_title(String::from("Particle system in Rust"))
+                    .with_title(format!("Particle system in Rust ({} fps)", 30))
                     .build_glium().unwrap();
 
     let device_type = DeviceType::from_bits_truncate(cl_h::CL_DEVICE_TYPE_GPU);
@@ -42,16 +48,17 @@ fn main() {
 
     let mut particles = match Particles::new(&display, context_cl, quantity) {
         Ok(particles) => particles,
-        Err(err) => { printlnc!(red: "{}", err); return ; },
+        Err(err) => { printlnc!(red: "{}", err); return ; }
     };
     println!("{} particles will be emitted!", quantity);
     particles.init_cube();
 
     let grav_point = Point::new(0.0001, 0.0001, 0.0);
 
-    // let title = ; // set_title(&self, title: &str)
-
+    let mut fps_counter = FPSCounter::new();
     loop {
+        let ns_at_frame_start = hertz::current_time_ns();
+
         for event in display.poll_events() {
             // println!("event: {:?}", event);
             match event {
@@ -61,11 +68,13 @@ fn main() {
             }
         }
 
-        // println!("caca");
-
         particles.update(grav_point);
         let mut frame = display.draw();
-        frame.clear_color_srgb_and_depth((0.17578125, 0.17578125, 0.17578125, 1.0), 1.0);
+        frame.clear_color_srgb_and_depth(GRAY_BACK, 1.0);
         particles.draw(&mut frame);
+
+        let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
+        display.get_window().unwrap().set_title(&title);
+        hertz::sleep_for_constant_rate(MAX_FPS, ns_at_frame_start);
     }
 }

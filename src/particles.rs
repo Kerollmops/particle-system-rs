@@ -48,8 +48,10 @@ pub struct Particles {
 
 impl Particles {
     pub fn new<F: Facade>(facade: &F, context: Context, quantity: usize) -> PartResult<Particles> {
-        if quantity == 0 {
-            return Err("Cannot emit zero particles.");
+        match quantity {
+            0 => { return Err("Cannot emit zero particles.") },
+            x if x > 3_000_000 => { return Err("Cannot emit more than 3 millions particles.") },
+            _ => ()
         }
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),

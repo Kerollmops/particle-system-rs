@@ -8,3 +8,5 @@ glium = "0.14"
 cgl = "0.1"
 ocl = { git = "https://github.com/Kerosene2000/ocl.git", rev = "a2e5480" }
 colorify = "0.2"
+fps_counter = "0.2"
+hertz = "0.2"
