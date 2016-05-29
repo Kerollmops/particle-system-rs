@@ -94,7 +94,7 @@ impl Particles {
         self.cl_side.proque.create_kernel("update").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.velocities)
-            .arg_vec(*gravity_point)
+            .arg_vec(gravity_point)
             .enq().unwrap();
 
         self.release_buffers();
