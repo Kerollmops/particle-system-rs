@@ -47,7 +47,7 @@ fn main() {
     println!("{} particles will be emitted!", quantity);
     particles.init_cube();
 
-    let grav_point = Point::new(10.0, 10.0, 0.0);
+    let grav_point = Point::new(0.0001, 0.0001, 0.0);
 
     // let title = ; // set_title(&self, title: &str)
 
