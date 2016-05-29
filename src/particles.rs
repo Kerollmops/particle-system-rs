@@ -92,35 +92,29 @@ impl Particles {
 
     pub fn init_sphere(&mut self) {
         self.acquire_buffers();
-
         self.cl_side.proque.create_kernel("init_sphere").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.velocities)
             .enq().unwrap();
-
         self.release_buffers();
     }
 
     pub fn init_cube(&mut self) {
         self.acquire_buffers();
-
         self.cl_side.proque.create_kernel("init_cube").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.velocities)
             .enq().unwrap();
-
         self.release_buffers();
     }
 
     pub fn update(&mut self, gravity_point: Point) {
         self.acquire_buffers();
-
         self.cl_side.proque.create_kernel("update").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.velocities)
             .arg_vec(gravity_point)
             .enq().unwrap();
-
         self.release_buffers();
     }
 
