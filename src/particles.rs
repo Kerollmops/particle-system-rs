@@ -103,7 +103,8 @@ impl Particles {
         self.acquire_buffers();
         self.cl_side.proque.create_kernel("init_cube").unwrap()
             .arg_buf(&self.cl_side.positions)
-            .arg_buf(&self.cl_side.velocities)
+            .arg_buf(&self.cl_side.positions)
+            .arg_buf(&self.cl_side.positions)
             .enq().unwrap();
         self.release_buffers();
     }

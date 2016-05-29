@@ -5,6 +5,8 @@ extern crate cgl;
 #[macro_use] extern crate colorify;
 extern crate fps_counter;
 extern crate hertz;
+extern crate easer; // FIXME
+use easer::functions::*; // FIXME
 mod particles;
 mod point;
 
@@ -53,6 +55,14 @@ fn main() {
     };
     println!("{} particles will be emitted!", quantity);
     particles.init_cube();
+
+    // let mut y = [0.0f32; 11];
+    // for i in 0..11 {
+    //     y[i] = i as f32 / 10.0;
+    // }
+    // println!("Before {:?}", &y[..]);
+    // y.iter_mut().map(|a| *a = Back::ease_in(*a, 0f32, 1f32, 1f32)).count();
+    // println!("After {:?}", &y[..]);
 
     let grav_point = Point::new(0.0001, 0.0001, 0.0);
 
