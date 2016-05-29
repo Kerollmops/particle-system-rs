@@ -3,6 +3,7 @@ use glium::{VertexBuffer, GlObject, Frame, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::uniforms::EmptyUniforms;
 use glium::backend::Facade;
+use cgmath::{PerspectiveFov, Rad};
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
 use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
@@ -10,7 +11,6 @@ use point::Point;
 
 const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");
 const FRAGMENT_SRC: &'static str = include_str!("shaders/default.frag");
-
 const PARTICLES_KERN_SRC: &'static str = include_str!("kernels/particles.cl");
 
 pub type PartResult<T> = Result<T, &'static str>;
@@ -31,7 +31,8 @@ implement_vertex!(Velocity, velocity);
 struct GlSide {
     positions: VertexBuffer<Position>,
     velocities: VertexBuffer<Velocity>,
-    program: Program
+    program: Program,
+    persp_proj: PerspectiveFov<f32>
 }
 
 struct ClSide {
@@ -56,7 +57,8 @@ impl Particles {
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC, None).unwrap()
+            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC, None).unwrap(),
+            persp_proj: PerspectiveFov { fovy: Rad { s: 60.0 }, aspect: 0.0f32, near: 0.1, far: 1000.0 } // TODO need to be computed ?
         };
 
         let prog_bldr = ClProgram::builder().src(PARTICLES_KERN_SRC);

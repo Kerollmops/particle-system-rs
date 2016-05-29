@@ -1,4 +1,5 @@
 #[macro_use] extern crate glium;
+extern crate cgmath;
 extern crate ocl;
 extern crate cgl;
 #[macro_use] extern crate colorify;
