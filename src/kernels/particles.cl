@@ -57,7 +57,7 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
     size_t const number_particles = get_global_size(0);
     size_t const side_particles = cbrt((float)number_particles); // FIXME compute this one time
     size_t const particles_left = number_particles - (side_particles * side_particles * side_particles);
-    float const spacing = 0.5f / (float)side_particles;
+    float const spacing = 1.0f / (float)side_particles;
 
     from_vec[idx] = positions[idx];
     if (idx >= number_particles - particles_left) { // FIXME not on (0, 0, 0)
@@ -68,7 +68,7 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
                                ((idx / side_particles) % side_particles) * spacing,
                                (idx % side_particles) * spacing);
     }
-    to_vec[idx] -= (side_particles / 2) * spacing;
+    to_vec[idx] -= ((float)(side_particles - 1) / 2.0f) * spacing;
     velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
 

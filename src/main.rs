@@ -21,7 +21,9 @@ use fps_counter::FPSCounter;
 use particles::Particles;
 use point::Point;
 
-const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
+// const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
+// const BACKGROUND: (f32, f32, f32, f32) = (0.02343, 0.02343, 0.02343, 1.0);
+const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
 const MAX_FPS: usize = 60;
 
 // FIXME delete
@@ -84,19 +86,19 @@ fn main() {
             particles.update_animation(anim_timer);
             anim_timer += 0.01;
         }
-        // else {
-        //     anim_type = match anim_type {
-        //         AnimationType::Cube => {
-        //             particles.init_sphere_animation(anim_duration);
-        //             AnimationType::Sphere
-        //         },
-        //         AnimationType::Sphere => {
-        //             particles.init_cube_animation(anim_duration);
-        //             AnimationType::Cube
-        //         }
-        //     };
-        //     anim_timer = 0.00;
-        // }
+        else {
+            anim_type = match anim_type {
+                AnimationType::Cube => {
+                    particles.init_sphere_animation(anim_duration);
+                    AnimationType::Sphere
+                },
+                AnimationType::Sphere => {
+                    particles.init_cube_animation(anim_duration);
+                    AnimationType::Cube
+                }
+            };
+            anim_timer = 0.00;
+        }
 
         let mut frame = display.draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
