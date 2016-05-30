@@ -84,19 +84,19 @@ fn main() {
             particles.update_animation(anim_timer);
             anim_timer += 0.01;
         }
-        else {
-            anim_type = match anim_type {
-                AnimationType::Cube => {
-                    particles.init_sphere_animation(anim_duration);
-                    AnimationType::Sphere
-                },
-                AnimationType::Sphere => {
-                    particles.init_cube_animation(anim_duration);
-                    AnimationType::Cube
-                }
-            };
-            anim_timer = 0.00;
-        }
+        // else {
+        //     anim_type = match anim_type {
+        //         AnimationType::Cube => {
+        //             particles.init_sphere_animation(anim_duration);
+        //             AnimationType::Sphere
+        //         },
+        //         AnimationType::Sphere => {
+        //             particles.init_cube_animation(anim_duration);
+        //             AnimationType::Cube
+        //         }
+        //     };
+        //     anim_timer = 0.00;
+        // }
 
         let mut frame = display.draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);

@@ -1,24 +1,24 @@
 static float back_ease_out(float t, float b, float c, float d) {
-    float s = 1.70158;
-    float inner_t = (t / d) - 1.0;
-    return (c * (inner_t * inner_t * ((s + 1.0) * inner_t + s) + 1.0) + b);
+    float s = 1.70158f;
+    float inner_t = (t / d) - 1.0f;
+    return (c * (inner_t * inner_t * ((s + 1.0f) * inner_t + s) + 1.0f) + b);
 }
 
 static float elastic_ease_out(float t, float b, float c, float d) {
-    if (t == 0.0) {
+    if (t == 0.0f) {
         return b;
     }
 
     float inner_t = t / d;
-    if (inner_t == 1.0) {
+    if (inner_t == 1.0f) {
         return b + c;
     }
 
-    float p = d * 0.3;
+    float p = d * 0.3f;
     float a = c;
-    float s = p / 4.0;
-    float temp = (inner_t * d - s) * (2.0 * M_PI) / p;
-    return (a * pow(2.0, -10.0 * inner_t) * sin(temp) + c + b);
+    float s = p / 4.0f;
+    float temp = (inner_t * d - s) * (2.0f * M_PI_F) / p;
+    return (a * pow(2.0f, -10.0f * inner_t) * sin(temp) + c + b);
 }
 
 #define EASING_ANIMATION elastic_ease_out
@@ -44,8 +44,8 @@ __kernel void init_sphere_animation(global float3 const * const restrict positio
     size_t const idx = get_global_id(0);
 
     from_vec[idx] = positions[idx];
-    to_vec[idx] = (float3)(-0.25, 0.56, 0.0);
-    velocities[idx] = (float3)(0.0, 0.0, 0.0);
+    to_vec[idx] = (float3)(-0.25f, 0.56f, 0.0f);
+    velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
 
 __kernel void init_cube_animation(global float3 const * const restrict positions,
@@ -57,13 +57,19 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
     size_t const number_particles = get_global_size(0);
     size_t const side_particles = cbrt((float)number_particles); // FIXME compute this one time
     size_t const particles_left = number_particles - (side_particles * side_particles * side_particles);
-    float const spacing = 200.0 / (float)side_particles;
+    float const spacing = 0.5f / (float)side_particles;
 
     from_vec[idx] = positions[idx];
-    to_vec[idx] = (float3)((idx / (side_particles * side_particles)) * spacing,
-                           ((idx / side_particles) % side_particles) * spacing,
-                           (idx % side_particles) * spacing);
-    velocities[idx] = (float3)(0.0, 0.0, 0.0);
+    if (idx >= number_particles - particles_left) { // FIXME not on (0, 0, 0)
+        to_vec[idx] = (float3)(0.0f, 0.0f, 0.0f);
+    }
+    else {
+        to_vec[idx] = (float3)((idx / (side_particles * side_particles)) * spacing,
+                               ((idx / side_particles) % side_particles) * spacing,
+                               (idx % side_particles) * spacing);
+    }
+    to_vec[idx] -= (side_particles / 2) * spacing;
+    velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
 
 __kernel void update_gravitation(global float3 * const restrict positions,
