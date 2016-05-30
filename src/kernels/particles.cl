@@ -55,6 +55,7 @@ __kernel void init_rand_sphere_animation(global float3 const * const restrict po
     float const y = (float)(xorshift64star(idx << 2) % (diameter * 100)) / 100.f;
     float const z = (float)(xorshift64star(idx >> 2) % (diameter * 100)) / 100.f;
 
+    // http://math.stackexchange.com/questions/1176761/point-lies-inside-of-the-sphere
     from_vec[idx] = positions[idx];
     float3 center = (float3)(10.f, 10.f, 10.f);
     to_vec[idx] = (float3)(x, y, z);
