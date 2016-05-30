@@ -29,8 +29,9 @@ const MAX_FPS: usize = 60;
 // FIXME delete
 #[derive(Debug)]
 enum AnimationType {
+    RandCube,
     Cube,
-    Sphere
+    RandSphere
 }
 
 fn main() {
@@ -89,10 +90,14 @@ fn main() {
         else {
             anim_type = match anim_type {
                 AnimationType::Cube => {
-                    particles.init_sphere_animation(anim_duration);
-                    AnimationType::Sphere
+                    particles.init_rand_sphere_animation(anim_duration);
+                    AnimationType::RandSphere
                 },
-                AnimationType::Sphere => {
+                AnimationType::RandSphere => {
+                    particles.init_rand_cube_animation(anim_duration);
+                    AnimationType::RandCube
+                },
+                AnimationType::RandCube => {
                     particles.init_cube_animation(anim_duration);
                     AnimationType::Cube
                 }

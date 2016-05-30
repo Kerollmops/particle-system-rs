@@ -92,12 +92,28 @@ impl Particles {
         })
     }
 
-    pub fn init_sphere_animation(&mut self, duration: f32) {
+    pub fn init_rand_sphere_animation(&mut self, duration: f32) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
         self.cl_side.animation.duration = duration;
-        self.cl_side.proque.create_kernel("init_sphere_animation").unwrap()
+        self.cl_side.proque.create_kernel("init_rand_sphere_animation").unwrap()
+            .arg_buf(&self.cl_side.positions)
+            .arg_buf(&self.cl_side.animation.from)
+            .arg_buf(&self.cl_side.animation.to)
+            .arg_buf(&self.cl_side.velocities)
+            .enq().unwrap();
+
+        self.cl_side.positions.cmd().gl_release().enq().unwrap();
+        self.cl_side.velocities.cmd().gl_release().enq().unwrap();
+    }
+
+    pub fn init_rand_cube_animation(&mut self, duration: f32) {
+        self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
+        self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
+
+        self.cl_side.animation.duration = duration;
+        self.cl_side.proque.create_kernel("init_rand_cube_animation").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.animation.from)
             .arg_buf(&self.cl_side.animation.to)

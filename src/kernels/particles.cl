@@ -36,15 +36,58 @@ __kernel void update_animation(global float3 const * const restrict from_vec,
                               EASING_ANIMATION(time, from.z, to.z - from.z, duration));
 }
 
-__kernel void init_sphere_animation(global float3 const * const restrict positions,
-                                    global float3 * const restrict from_vec,
-                                    global float3 * const restrict to_vec,
-                                    global float3 * const restrict velocities) {
-    //size_t const size = get_global_size(0);
+static size_t  xorshift64star(size_t x) {
+    x ^= x >> 12; // a
+    x ^= x << 25; // b
+    x ^= x >> 27; // c
+    return x * size_t(2685821657736338717);
+}
+
+__kernel void init_rand_sphere_animation(global float3 const * const restrict positions,
+                                         global float3 * const restrict from_vec,
+                                         global float3 * const restrict to_vec,
+                                         global float3 * const restrict velocities) {
     size_t const idx = get_global_id(0);
 
+    float const scaling = 1.f / 20.f;
+    size_t const diameter = 20;
+    float const x = (float)(xorshift64star(idx >> 3) % (diameter * 100)) / 100.f;
+    float const y = (float)(xorshift64star(idx << 2) % (diameter * 100)) / 100.f;
+    float const z = (float)(xorshift64star(idx >> 2) % (diameter * 100)) / 100.f;
+
     from_vec[idx] = positions[idx];
-    to_vec[idx] = (float3)(-0.25f, 0.56f, 0.0f);
+    float3 center = (float3)(10.f, 10.f, 10.f);
+    to_vec[idx] = (float3)(x, y, z);
+    float dist = distance(to_vec[idx], center);
+    if (dist > diameter / 2.f) {
+        to_vec[idx] = center;
+    }
+    to_vec[idx] -= center;
+    to_vec[idx] *= scaling;
+    velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
+}
+
+__kernel void init_rand_cube_animation(global float3 const * const restrict positions,
+                                       global float3 * const restrict from_vec,
+                                       global float3 * const restrict to_vec,
+                                       global float3 * const restrict velocities) {
+    size_t const idx = get_global_id(0);
+
+    float const scaling = 1.f / 20.f;
+    size_t const diameter = 20;
+    float const x = (float)(xorshift64star(idx << 3) % (diameter * 100)) / 100.f;
+    float const y = (float)(xorshift64star(idx >> 2) % (diameter * 100)) / 100.f;
+    float const z = (float)(xorshift64star(idx << 2) % (diameter * 100)) / 100.f;
+
+    from_vec[idx] = positions[idx];
+    float3 center = (float3)(10.f, 10.f, 10.f);
+    to_vec[idx] = (float3)(x, y, z);
+    float dist = distance(to_vec[idx], center);
+    if (dist > diameter / 2.f) {
+        to_vec[idx] = to_vec[idx];
+    }
+    to_vec[idx] -= center;
+    to_vec[idx] *= scaling;
     velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
 
@@ -53,12 +96,10 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
                                   global float3 * const restrict to_vec,
                                   global float3 * const restrict velocities) {
     size_t const idx = get_global_id(0);
-
     size_t const number_particles = get_global_size(0);
     size_t const side_particles = cbrt((float)number_particles); // FIXME compute this one time
     size_t const particles_left = number_particles - (side_particles * side_particles * side_particles);
     float const spacing = 1.0f / (float)side_particles;
-
     from_vec[idx] = positions[idx];
     if (idx >= number_particles - particles_left) { // FIXME not on (0, 0, 0)
         to_vec[idx] = (float3)(0.0f, 0.0f, 0.0f);
