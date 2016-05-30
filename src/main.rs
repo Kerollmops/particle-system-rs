@@ -5,8 +5,6 @@ extern crate cgl;
 #[macro_use] extern crate colorify;
 extern crate fps_counter;
 extern crate hertz;
-extern crate easer; // FIXME
-use easer::functions::*; // FIXME
 mod particles;
 mod point;
 
@@ -54,22 +52,13 @@ fn main() {
         Err(err) => { printlnc!(red: "{}", err); return ; }
     };
     println!("{} particles will be emitted!", quantity);
-    particles.init_cube();
-
-    // let mut y = [0.0f32; 11];
-    // for i in 0..11 {
-    //     y[i] = i as f32 / 10.0;
-    // }
-    // println!("Before {:?}", &y[..]);
-    // y.iter_mut().map(|a| *a = Back::ease_in(*a, 0f32, 1f32, 1f32)).count();
-    // println!("After {:?}", &y[..]);
+    particles.init_cube_animation(1.0);
 
     let grav_point = Point::new(0.0001, 0.0001, 0.0);
 
     let mut fps_counter = FPSCounter::new();
     loop {
-        let ns_at_frame_start = hertz::current_time_ns();
-
+        let frame_start_time = hertz::current_time_ns();
         for event in display.poll_events() {
             // println!("event: {:?}", event);
             match event {
@@ -79,13 +68,13 @@ fn main() {
             }
         }
 
-        particles.update(grav_point);
+        particles.update_animation(1.0);
         let mut frame = display.draw();
         frame.clear_color_srgb_and_depth(GRAY_BACK, 1.0);
         particles.draw(&mut frame);
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
         display.get_window().unwrap().set_title(&title);
-        hertz::sleep_for_constant_rate(MAX_FPS, ns_at_frame_start);
+        hertz::sleep_for_constant_rate(MAX_FPS, frame_start_time);
     }
 }

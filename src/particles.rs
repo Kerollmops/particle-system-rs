@@ -35,9 +35,16 @@ struct GlSide {
     persp_proj: PerspectiveFov<f32>
 }
 
+struct Animation {
+    from: Buffer<ClFloat3>,
+    to: Buffer<ClFloat3>,
+    duration: f32
+}
+
 struct ClSide {
     positions: Buffer<ClFloat3>,
     velocities: Buffer<ClFloat3>,
+    animation: Animation,
     proque: ProQue
 }
 
@@ -68,9 +75,14 @@ impl Particles {
 
         let cl_side = ClSide {
             positions: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
-                [quantity], gl_side.positions.get_id()).unwrap(),
+                        [quantity], gl_side.positions.get_id()).unwrap(),
             velocities: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
-                [quantity], gl_side.velocities.get_id()).unwrap(),
+                        [quantity], gl_side.velocities.get_id()).unwrap(),
+            animation: Animation {
+                from: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
+                to: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
+                duration: 0.0_f32,
+            },
             proque: proque
         };
         Ok(Particles {
@@ -80,43 +92,65 @@ impl Particles {
         })
     }
 
-    fn acquire_buffers(&mut self) {
+    pub fn init_sphere_animation(&mut self, duration: f32) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
-    }
 
-    fn release_buffers(&mut self) {
+        self.cl_side.animation.duration = duration;
+        self.cl_side.proque.create_kernel("init_sphere_animation").unwrap()
+            .arg_buf(&self.cl_side.positions)
+            .arg_buf(&self.cl_side.animation.from)
+            .arg_buf(&self.cl_side.animation.to)
+            .arg_buf(&self.cl_side.velocities)
+            .enq().unwrap();
+
         self.cl_side.positions.cmd().gl_release().enq().unwrap();
         self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn init_sphere(&mut self) {
-        self.acquire_buffers();
-        self.cl_side.proque.create_kernel("init_sphere").unwrap()
+    pub fn init_cube_animation(&mut self, duration: f32) {
+        self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
+        self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
+
+        self.cl_side.animation.duration = duration;
+        self.cl_side.proque.create_kernel("init_cube_animation").unwrap()
             .arg_buf(&self.cl_side.positions)
+            .arg_buf(&self.cl_side.animation.from)
+            .arg_buf(&self.cl_side.animation.to)
             .arg_buf(&self.cl_side.velocities)
             .enq().unwrap();
-        self.release_buffers();
+
+        self.cl_side.positions.cmd().gl_release().enq().unwrap();
+        self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn init_cube(&mut self) {
-        self.acquire_buffers();
-        self.cl_side.proque.create_kernel("init_cube").unwrap()
+    pub fn update_animation(&mut self, time: f32) {
+        self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
+
+        self.cl_side.proque.create_kernel("update_animation").unwrap()
+            .arg_buf(&self.cl_side.animation.from)
+            .arg_buf(&self.cl_side.animation.to)
             .arg_buf(&self.cl_side.positions)
-            .arg_buf(&self.cl_side.positions)
-            .arg_buf(&self.cl_side.positions)
+            .arg_scl(time)
+            .arg_scl(self.cl_side.animation.duration)
             .enq().unwrap();
-        self.release_buffers();
+
+        self.cl_side.positions.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn update(&mut self, gravity_point: Point) {
-        self.acquire_buffers();
-        self.cl_side.proque.create_kernel("update").unwrap()
+    pub fn update_gravitation(&mut self, gravity_point: Point, t: f32) {
+        self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
+        self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
+
+        self.cl_side.proque.create_kernel("update_gravitation").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.velocities)
             .arg_vec(gravity_point)
+            .arg_scl(t)
             .enq().unwrap();
-        self.release_buffers();
+
+        self.cl_side.positions.cmd().gl_release().enq().unwrap();
+        self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
     pub fn draw(&self, frame: &mut Frame) {
