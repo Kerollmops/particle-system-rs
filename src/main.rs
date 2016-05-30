@@ -21,8 +21,15 @@ use fps_counter::FPSCounter;
 use particles::Particles;
 use point::Point;
 
-const GRAY_BACK: (f32, f32, f32, f32) = (0.17578125, 0.17578125, 0.17578125, 1.0);
+const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
 const MAX_FPS: usize = 60;
+
+// FIXME delete
+#[derive(Debug)]
+enum AnimationType {
+    Cube,
+    Sphere
+}
 
 fn main() {
     let display = glium::glutin::WindowBuilder::new()
@@ -52,7 +59,12 @@ fn main() {
         Err(err) => { printlnc!(red: "{}", err); return ; }
     };
     println!("{} particles will be emitted!", quantity);
-    particles.init_cube_animation(1.0);
+
+    // let start_animation = use std::time::Duration;
+    let mut anim_timer = 0.0_f32; // FIXME use duration
+    let anim_duration = 0.5_f32;
+    let mut anim_type = AnimationType::Cube;
+    particles.init_cube_animation(anim_duration);
 
     let grav_point = Point::new(0.0001, 0.0001, 0.0);
 
@@ -68,9 +80,26 @@ fn main() {
             }
         }
 
-        particles.update_animation(1.0);
+        if anim_timer <= anim_duration {
+            particles.update_animation(anim_timer);
+            anim_timer += 0.01;
+        }
+        else {
+            anim_type = match anim_type {
+                AnimationType::Cube => {
+                    particles.init_sphere_animation(anim_duration);
+                    AnimationType::Sphere
+                },
+                AnimationType::Sphere => {
+                    particles.init_cube_animation(anim_duration);
+                    AnimationType::Cube
+                }
+            };
+            anim_timer = 0.00;
+        }
+
         let mut frame = display.draw();
-        frame.clear_color_srgb_and_depth(GRAY_BACK, 1.0);
+        frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
         particles.draw(&mut frame);
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
