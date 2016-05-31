@@ -84,7 +84,7 @@ fn main() {
 
     let (width, height) = (1024.0, 768.0);
     let mut camera = Camera::new(width / height);
-    let grav_point = Point::new(0.001, 0.0, 0.0);
+    let grav_point = Point::new(0.0, 0.0, 0.0);
 
     let mut fps_counter = FPSCounter::new();
     loop {
@@ -106,6 +106,7 @@ fn main() {
         else {
             particles.update_gravitation(grav_point, global_timer);
         }
+
         // else {
         //     anim_type = match anim_type {
         //         AnimationType::Cube => {

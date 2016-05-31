@@ -129,10 +129,29 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
     velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
 
+#define G 0.00000066742f
+
 __kernel void update_gravitation(global float3 * const restrict positions,
                                  global float3 * const restrict velocities,
                                  float3 gravity_point,
                                  float t) {
     size_t const idx = get_global_id(0);
-    positions[idx] += gravity_point;
+
+    // // (2 * M_PI_F) / t).pow(2) * a.pow(2) = k;
+    // // Avec a, demi grand-axe de l'orbite, T période (année de l'astre), k constante de gravitation
+    // float part_one = ((2 * M_PI_F) / t);
+    // (part_one * part_one)
+
+    // F12 = (-G*(m1 * m2) / d.pow(2)) * U12
+
+    // float length(floatn p)
+    // float fast_length(floatn p)
+
+    positions[idx] += velocities[idx];
+
+    float3 const dir = positions[idx] - gravity_point;
+    float const dist = length(dir);
+    float3 const unit_dir = dir / dist;
+
+    velocities[idx] += (-G * (10.f * 10.f) / (dist * dist)) * unit_dir;
 }
