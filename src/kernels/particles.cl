@@ -1,8 +1,10 @@
 float quad_ease_in_out(float t, float b, float c, float d) {
     float inner_t = t / (d / 2.0);
+
     if (inner_t < 1.0) {
         return (c / 2.0 * (pow(inner_t, 2))) + b;
     }
+
     float temp = inner_t - 1.0;
     return (-c / 2.0 * (((inner_t - 2.0) * (temp)) - 1.0) + b);
 }
@@ -58,7 +60,7 @@ __kernel void init_rand_sphere_animation(global float3 const * const restrict po
                                          global float3 * const restrict velocities) {
     size_t const idx = get_global_id(0);
 
-    float const scaling = 1.f / 20.f;
+    float const scaling = 1.f / 15.f;
     size_t const radius = 10;
 
     size_t const scal_rad = (radius / 2) * 10000;

@@ -7,18 +7,23 @@ extern crate fps_counter;
 extern crate hertz;
 mod particles;
 mod point;
+mod camera;
 
 use std::env;
 use glium::{DisplayBuild, Surface};
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::Escape;
+use glium::index::{NoIndices, PrimitiveType};
+use glium::backend::Facade;
+use glium::Frame;
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
 use cgl::{CGLGetCurrentContext, CGLGetShareGroup};
 use fps_counter::FPSCounter;
 use particles::Particles;
+use camera::Camera;
 use point::Point;
 
 const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
@@ -31,6 +36,14 @@ enum AnimationType {
     RandCube,
     Cube,
     RandSphere
+}
+
+fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
+    let indices = NoIndices(PrimitiveType::Points);
+    let uniforms = uniform!{ matrix: *camera.matrix().as_ref() };
+    frame.draw(particles.positions(), &indices, particles.program(),
+        &uniforms, &Default::default()).unwrap();
+    frame.set_finish().unwrap();
 }
 
 fn main() {
@@ -68,7 +81,9 @@ fn main() {
     let mut anim_type = AnimationType::Cube;
     particles.init_cube_animation(anim_duration);
 
-    let grav_point = Point::new(0.0001, 0.0001, 0.0);
+    let (width, height) = (1024.0, 768.0);
+    let mut camera = Camera::new(width / height);
+    let grav_point = Point::new(0.0, 0.0, 0.0);
 
     let mut fps_counter = FPSCounter::new();
     loop {
@@ -108,7 +123,7 @@ fn main() {
 
         let mut frame = display.draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        particles.draw(&mut frame);
+        draw(&mut frame, &camera, &particles);
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
         display.get_window().unwrap().set_title(&title);
