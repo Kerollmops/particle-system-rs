@@ -76,6 +76,7 @@ fn main() {
     println!("{} particles will be emitted!", quantity);
 
     // let start_animation = use std::time::Duration;
+    let mut global_timer = 0.0_f32; // FIXME use duration
     let mut anim_timer = 0.0_f32; // FIXME use duration
     let anim_duration = 0.7_f32;
     let mut anim_type = AnimationType::Cube;
@@ -83,7 +84,7 @@ fn main() {
 
     let (width, height) = (1024.0, 768.0);
     let mut camera = Camera::new(width / height);
-    let grav_point = Point::new(0.0, 0.0, 0.0);
+    let grav_point = Point::new(0.001, 0.0, 0.0);
 
     let mut fps_counter = FPSCounter::new();
     loop {
@@ -97,29 +98,33 @@ fn main() {
             }
         }
 
+        global_timer += 0.01;
         if anim_timer <= anim_duration {
             particles.update_animation(anim_timer);
             anim_timer += 0.01;
         }
         else {
-            anim_type = match anim_type {
-                AnimationType::Cube => {
-                    particles.init_rand_sphere_animation(anim_duration);
-                    AnimationType::RandSphere
-                },
-                AnimationType::RandSphere => {
-                    // particles.init_rand_cube_animation(anim_duration);
-                    // AnimationType::RandCube
-                    particles.init_cube_animation(anim_duration);
-                    AnimationType::Cube
-                },
-                AnimationType::RandCube => {
-                    particles.init_cube_animation(anim_duration);
-                    AnimationType::Cube
-                }
-            };
-            anim_timer = 0.00;
+            particles.update_gravitation(grav_point, global_timer);
         }
+        // else {
+        //     anim_type = match anim_type {
+        //         AnimationType::Cube => {
+        //             particles.init_rand_sphere_animation(anim_duration);
+        //             AnimationType::RandSphere
+        //         },
+        //         AnimationType::RandSphere => {
+        //             // particles.init_rand_cube_animation(anim_duration);
+        //             // AnimationType::RandCube
+        //             particles.init_cube_animation(anim_duration);
+        //             AnimationType::Cube
+        //         },
+        //         AnimationType::RandCube => {
+        //             particles.init_cube_animation(anim_duration);
+        //             AnimationType::Cube
+        //         }
+        //     };
+        //     anim_timer = 0.00;
+        // }
 
         let mut frame = display.draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
