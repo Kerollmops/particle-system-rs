@@ -1,3 +1,12 @@
+float quad_ease_in_out(float t, float b, float c, float d) {
+    float inner_t = t / (d / 2.0);
+    if (inner_t < 1.0) {
+        return (c / 2.0 * (pow(inner_t, 2))) + b;
+    }
+    float temp = inner_t - 1.0;
+    return (-c / 2.0 * (((inner_t - 2.0) * (temp)) - 1.0) + b);
+}
+
 static float back_ease_out(float t, float b, float c, float d) {
     float s = 1.70158f;
     float inner_t = (t / d) - 1.0f;

@@ -64,7 +64,7 @@ fn main() {
 
     // let start_animation = use std::time::Duration;
     let mut anim_timer = 0.0_f32; // FIXME use duration
-    let anim_duration = 0.5_f32;
+    let anim_duration = 0.7_f32;
     let mut anim_type = AnimationType::Cube;
     particles.init_cube_animation(anim_duration);
 
