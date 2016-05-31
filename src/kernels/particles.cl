@@ -1,12 +1,12 @@
-float quad_ease_in_out(float t, float b, float c, float d) {
-    float inner_t = t / (d / 2.0);
+static float quad_ease_in_out(float t, float b, float c, float d) {
+    float inner_t = t / (d / 2.0f);
 
-    if (inner_t < 1.0) {
-        return (c / 2.0 * (pow(inner_t, 2))) + b;
+    if (inner_t < 1.0f) {
+        return (c / 2.0f * (pow(inner_t, 2))) + b;
     }
 
-    float temp = inner_t - 1.0;
-    return (-c / 2.0 * (((inner_t - 2.0) * (temp)) - 1.0) + b);
+    float temp = inner_t - 1.0f;
+    return (-c / 2.0f * (((inner_t - 2.0f) * (temp)) - 1.0f) + b);
 }
 
 static float back_ease_out(float t, float b, float c, float d) {
@@ -137,21 +137,11 @@ __kernel void update_gravitation(global float3 * const restrict positions,
                                  float t) {
     size_t const idx = get_global_id(0);
 
-    // // (2 * M_PI_F) / t).pow(2) * a.pow(2) = k;
-    // // Avec a, demi grand-axe de l'orbite, T période (année de l'astre), k constante de gravitation
-    // float part_one = ((2 * M_PI_F) / t);
-    // (part_one * part_one)
-
-    // F12 = (-G*(m1 * m2) / d.pow(2)) * U12
-
-    // float length(floatn p)
-    // float fast_length(floatn p)
-
-    positions[idx] += velocities[idx];
-
     float3 const dir = positions[idx] - gravity_point;
-    float const dist = length(dir);
+    float const dist = length(dir); // fast_length
     float3 const unit_dir = dir / dist;
 
-    velocities[idx] += (-G * (10.f * 10.f) / (dist * dist)) * unit_dir;
+    positions[idx] += velocities[idx];
+    // velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir; // classic
+    velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir;
 }

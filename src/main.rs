@@ -79,8 +79,12 @@ fn main() {
     let mut global_timer = 0.0_f32; // FIXME use duration
     let mut anim_timer = 0.0_f32; // FIXME use duration
     let anim_duration = 0.7_f32;
-    let mut anim_type = AnimationType::Cube;
-    particles.init_cube_animation(anim_duration);
+    let mut anim_type = AnimationType::RandSphere;
+    match anim_type {
+        AnimationType::Cube => particles.init_cube_animation(anim_duration),
+        AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),
+        AnimationType::RandSphere => particles.init_rand_sphere_animation(anim_duration),
+    }
 
     let (width, height) = (1024.0, 768.0);
     let mut camera = Camera::new(width / height);
