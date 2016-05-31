@@ -50,20 +50,21 @@ __kernel void init_rand_sphere_animation(global float3 const * const restrict po
     size_t const idx = get_global_id(0);
 
     float const scaling = 1.f / 20.f;
-    size_t const diameter = 20;
-    float const x = (float)(xorshift64star(idx >> 3) % (diameter * 100)) / 100.f;
-    float const y = (float)(xorshift64star(idx << 2) % (diameter * 100)) / 100.f;
-    float const z = (float)(xorshift64star(idx >> 2) % (diameter * 100)) / 100.f;
+    size_t const radius = 10;
+    size_t const diameter = radius * 2;
 
-    // http://math.stackexchange.com/questions/1176761/point-lies-inside-of-the-sphere
+    // FIXME a half need to be only on radius, the other half inside the sphere
+    // FIXME or half part between radius and radius/2, the other part between radius/2 and 0
+
+    float const u = radians((float)(xorshift64star(idx >> 3) % 360));
+    float const v = radians((float)(xorshift64star(idx << 2) % 360));
+    float const radius_rand = (float)(xorshift64star(idx >> 2) % radius);
+    float const x = radius_rand * cos(u) * sin(v);
+    float const y = radius_rand * sin(u) * sin(v);
+    float const z = radius_rand * cos(v);
+
     from_vec[idx] = positions[idx];
-    float3 center = (float3)(10.f, 10.f, 10.f);
     to_vec[idx] = (float3)(x, y, z);
-    float dist = distance(to_vec[idx], center);
-    if (dist > diameter / 2.f) {
-        to_vec[idx] = center;
-    }
-    to_vec[idx] -= center;
     to_vec[idx] *= scaling;
     velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
@@ -76,9 +77,9 @@ __kernel void init_rand_cube_animation(global float3 const * const restrict posi
 
     float const scaling = 1.f / 20.f;
     size_t const diameter = 20;
-    float const x = (float)(xorshift64star(idx << 3) % (diameter * 100)) / 100.f;
-    float const y = (float)(xorshift64star(idx >> 2) % (diameter * 100)) / 100.f;
-    float const z = (float)(xorshift64star(idx << 2) % (diameter * 100)) / 100.f;
+    float const x = (float)(xorshift64star(idx << 3) % (diameter * 10)) / 10.f;
+    float const y = (float)(xorshift64star(idx >> 2) % (diameter * 10)) / 10.f;
+    float const z = (float)(xorshift64star(idx << 2) % (diameter * 10)) / 10.f;
 
     from_vec[idx] = positions[idx];
     float3 center = (float3)(10.f, 10.f, 10.f);
