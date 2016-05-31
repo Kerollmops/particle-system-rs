@@ -1,5 +1,5 @@
 #[macro_use] extern crate glium;
-extern crate cgmath;
+extern crate nalgebra;
 extern crate ocl;
 extern crate cgl;
 #[macro_use] extern crate colorify;
@@ -21,13 +21,12 @@ use fps_counter::FPSCounter;
 use particles::Particles;
 use point::Point;
 
-// const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
+const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
 // const BACKGROUND: (f32, f32, f32, f32) = (0.02343, 0.02343, 0.02343, 1.0);
-const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
+// const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
 const MAX_FPS: usize = 60;
 
 // FIXME delete
-#[derive(Debug)]
 enum AnimationType {
     RandCube,
     Cube,

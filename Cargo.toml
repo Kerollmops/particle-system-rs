@@ -5,7 +5,7 @@ authors = ["Clément Renault <renault.cle@gmail.com>"]
 
 [dependencies]
 glium = "0.14"
-cgmath = "0.9"
+nalgebra = "0.8"
 cgl = "0.1"
 ocl = { git = "https://github.com/Kerosene2000/ocl.git", rev = "a2e5480" }
 colorify = "0.2"

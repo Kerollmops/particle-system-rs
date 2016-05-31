@@ -3,7 +3,7 @@ use glium::{VertexBuffer, GlObject, Frame, Surface, Program};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::uniforms::EmptyUniforms;
 use glium::backend::Facade;
-use cgmath::{PerspectiveFov, Rad};
+use nalgebra::{PerspectiveMatrix3, Isometry3, Point3, Vector3, ToHomogeneous};
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
 use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
@@ -32,7 +32,8 @@ struct GlSide {
     positions: VertexBuffer<Position>,
     velocities: VertexBuffer<Velocity>,
     program: Program,
-    persp_proj: PerspectiveFov<f32>
+    persp_proj: PerspectiveMatrix3<f32>,
+    look_at: Isometry3<f32>
 }
 
 struct Animation {
@@ -61,11 +62,22 @@ impl Particles {
             x if x > 3_000_000 => { return Err("Cannot emit more than 3 millions particles.") },
             _ => ()
         }
+
+        // let (width, height) = facade.get_max_viewport_dimensions();
+        let (width, height) = (1024.0, 768.0);
+        let persp_proj = PerspectiveMatrix3::new(width / height, 60.0, 0.1, 1000.0);
+
+        let eye_pos = Point3::new(1.0, 1.0, 1.0);
+        let target = Point3::new(0.0, 0.0, 0.0);
+        let up = Vector3::new(0.0, 1.0, 0.0);
+        let look_at = Isometry3::look_at_rh(&eye_pos, &target, &up);
+
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC, None).unwrap(),
-            persp_proj: PerspectiveFov { fovy: Rad { s: 60.0 }, aspect: 0.0f32, near: 0.1, far: 1000.0 } // TODO need to be computed ?
+            persp_proj: persp_proj,
+            look_at: look_at
         };
 
         let prog_bldr = ClProgram::builder().src(PARTICLES_KERN_SRC);
@@ -171,8 +183,12 @@ impl Particles {
 
     pub fn draw(&self, frame: &mut Frame) {
         let indices = NoIndices(PrimitiveType::Points);
+        let uniforms = uniform!{ // FIXME don't compute this each time ???
+            projection: *self.gl_side.persp_proj.as_matrix().as_ref(),
+            view: *self.gl_side.look_at.to_homogeneous().as_ref()
+        };
         frame.draw(&self.gl_side.positions, &indices, &self.gl_side.program,
-            &EmptyUniforms, &Default::default()).unwrap();
+            &uniforms, &Default::default()).unwrap();
         frame.set_finish().unwrap();
     }
 }
