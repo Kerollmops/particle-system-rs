@@ -48,21 +48,26 @@ __kernel void init_rand_sphere_animation(global float3 const * const restrict po
                                          global float3 * const restrict to_vec,
                                          global float3 * const restrict velocities) {
     size_t const idx = get_global_id(0);
+    size_t const number_particles = get_global_size(0);
 
     float const scaling = 1.f / 20.f;
     size_t const radius = 10;
-    size_t const diameter = radius * 2;
-
-    // FIXME a half need to be only on radius, the other half inside the sphere
-    // FIXME or half part between radius and radius/2, the other part between radius/2 and 0
-
+    float radius_rand;
+    // FIXME understand this (wanted: half generated between radius/2 and 0)
+    if (idx > number_particles) {
+        radius_rand = (float)(xorshift64star(idx >> 2) % (radius * 100));
+        radius_rand /= 100.f;
+    }
+    else {
+        size_t const scal_rad = (radius / 2) * 100;
+        radius_rand = (float)(xorshift64star(idx >> 2) % scal_rad) + scal_rad;
+        radius_rand /= 100.f;
+    }
     float const u = radians((float)(xorshift64star(idx >> 3) % 360));
     float const v = radians((float)(xorshift64star(idx << 2) % 360));
-    float const radius_rand = (float)(xorshift64star(idx >> 2) % radius);
     float const x = radius_rand * cos(u) * sin(v);
     float const y = radius_rand * sin(u) * sin(v);
     float const z = radius_rand * cos(v);
-
     from_vec[idx] = positions[idx];
     to_vec[idx] = (float3)(x, y, z);
     to_vec[idx] *= scaling;
@@ -103,8 +108,8 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
     size_t const particles_left = number_particles - (side_particles * side_particles * side_particles);
     float const spacing = 1.0f / (float)side_particles;
     from_vec[idx] = positions[idx];
-    if (idx >= number_particles - particles_left) { // FIXME not on (0, 0, 0)
-        to_vec[idx] = (float3)(0.0f, 0.0f, 0.0f);
+    if (idx >= number_particles - particles_left) {
+        to_vec[idx] = (float3)(0.0f, 0.0f, 0.0f); // FIXME random position
     }
     else {
         to_vec[idx] = (float3)((idx / (side_particles * side_particles)) * spacing,
