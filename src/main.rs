@@ -93,8 +93,10 @@ fn main() {
                     AnimationType::RandSphere
                 },
                 AnimationType::RandSphere => {
-                    particles.init_rand_cube_animation(anim_duration);
-                    AnimationType::RandCube
+                    // particles.init_rand_cube_animation(anim_duration);
+                    // AnimationType::RandCube
+                    particles.init_cube_animation(anim_duration);
+                    AnimationType::Cube
                 },
                 AnimationType::RandCube => {
                     particles.init_cube_animation(anim_duration);

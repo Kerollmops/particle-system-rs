@@ -76,7 +76,9 @@ __kernel void init_rand_cube_animation(global float3 const * const restrict posi
     size_t const idx = get_global_id(0);
 
     float const scaling = 1.f / 20.f;
-    size_t const diameter = 20;
+    size_t const radius = 10;
+
+    size_t const diameter = radius * 2;
     float3 const center = (float3)(10.f, 10.f, 10.f);
     float const x = (float)(xorshift64star(idx << 3) % (diameter * 10000)) / 10000.f;
     float const y = (float)(xorshift64star(idx >> 2) % (diameter * 10000)) / 10000.f;
@@ -98,7 +100,7 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
 
     size_t const side_parts = cbrt((float)total_parts); // FIXME compute this one time
     size_t const parts_left = total_parts - (side_parts * side_parts * side_parts);
-    float const spacing = 1.0f / (float)side_parts;
+    float const spacing = (1.f / (float)side_parts);
 
     from_vec[idx] = positions[idx];
     if (idx >= total_parts - parts_left) {

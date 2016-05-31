@@ -67,7 +67,7 @@ impl Particles {
         let (width, height) = (1024.0, 768.0);
         let persp_proj = PerspectiveMatrix3::new(width / height, 60.0, 0.1, 1000.0);
 
-        let eye_pos = Point3::new(1.0, 1.0, 1.0);
+        let eye_pos = Point3::new(0.6, 0.6, 0.6);
         let target = Point3::new(0.0, 0.0, 0.0);
         let up = Vector3::new(0.0, 1.0, 0.0);
         let look_at = Isometry3::look_at_rh(&eye_pos, &target, &up);
