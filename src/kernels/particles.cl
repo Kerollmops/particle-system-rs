@@ -143,5 +143,13 @@ __kernel void update_gravitation(global float3 * const restrict positions,
 
     positions[idx] += velocities[idx];
     // velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir; // classic
-    velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir;
+    velocities[idx] += (-G * 1.f * (dist * dist)) * unit_dir * 1000.f;
+
+    /*
+        float DeltaTimeSecs = gDeltaTimeMillis / 1000.0f;
+        float t1 = Age0[0] / 1000.0;
+        float t2 = Age / 1000.0;
+        vec3 DeltaP = DeltaTimeSecs * Velocity0[0];
+        vec3 DeltaV = vec3(DeltaTimeSecs) * (0.0, -9.81, 0.0);
+    */
 }

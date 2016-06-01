@@ -79,7 +79,7 @@ fn main() {
     let mut global_timer = 0.0_f32; // FIXME use duration
     let mut anim_timer = 0.0_f32; // FIXME use duration
     let anim_duration = 0.7_f32;
-    let mut anim_type = AnimationType::RandSphere;
+    let mut anim_type = AnimationType::Cube;
     match anim_type {
         AnimationType::Cube => particles.init_cube_animation(anim_duration),
         AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),
