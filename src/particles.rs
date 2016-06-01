@@ -17,12 +17,12 @@ const PARTICLES_KERN_SRC: &'static str = include_str!("kernels/particles.cl");
 pub type PartResult<T> = Result<T, &'static str>;
 
 #[derive(Copy, Clone)]
-struct Position {
+pub struct Position {
     position: [f32; 4]
 }
 
 #[derive(Copy, Clone)]
-struct Velocity {
+pub struct Velocity {
     velocity: [f32; 4]
 }
 
@@ -58,7 +58,7 @@ impl Particles {
     pub fn new<F: Facade>(facade: &F, context: Context, quantity: usize) -> PartResult<Particles> {
         match quantity {
             0 => { return Err("Cannot emit zero particles.") },
-            x if x > 3_000_000 => { return Err("Cannot emit more than 3 millions particles.") },
+            x if x > 3_000_032 => { return Err("Cannot emit more than 3 millions particles.") },
             _ => ()
         }
 

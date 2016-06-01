@@ -13,7 +13,7 @@ use std::env;
 use glium::{DisplayBuild, Surface};
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
-use glium::glutin::VirtualKeyCode::Escape;
+use glium::glutin::VirtualKeyCode::{Escape, Space};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::backend::Facade;
 use glium::Frame;
@@ -41,15 +41,20 @@ enum AnimationType {
 
 fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
     let indices = NoIndices(PrimitiveType::Points);
-    let uniforms = uniform!{ matrix: *camera.matrix().as_ref() };
+    let uniforms = uniform!{
+        matrix: *camera.matrix().as_ref(),
+        sphere_diameter: 0.002_f32,
+        aspect_ratio: camera.screen_width() / camera.screen_height()
+    };
     frame.draw(particles.positions(), &indices, particles.program(),
         &uniforms, &Default::default()).unwrap();
     frame.set_finish().unwrap();
 }
 
 fn main() {
+    let (width, height) = (1024.0, 768.0);
     let display = glium::glutin::WindowBuilder::new()
-                    .with_dimensions(1024, 768)
+                    .with_dimensions(width as u32, height as u32)
                     .with_title(format!("Particle system in Rust ({} fps)", 30))
                     .build_glium().unwrap();
 
@@ -88,9 +93,9 @@ fn main() {
         AnimationType::RandSphere => particles.init_rand_sphere_animation(anim_duration),
     }
 
-    let (width, height) = (1024.0, 768.0);
-    let mut camera = Camera::new(width / height);
+    let mut camera = Camera::new(width, height);
     let grav_point = Point::new(0.0, 0.0, 0.0);
+    let mut update_particles = true;
 
     let mut fps_counter = FPSCounter::new();
     loop {
@@ -100,42 +105,47 @@ fn main() {
             match event {
                 Event::Closed
                 | Event::KeyboardInput(Released, _, Some(Escape)) => { return ; },
+                Event::KeyboardInput(Released, _, Some(Space)) => {
+                    update_particles = !update_particles;
+                },
                 _ => ()
             }
         }
 
         global_timer += 0.01;
-        if anim_timer <= anim_duration {
-            particles.update_animation(anim_timer);
-            anim_timer += 0.01;
-        }
-        else {
-            particles.update_gravitation(grav_point, global_timer);
-        }
 
-        // else {
-        //     anim_type = match anim_type {
-        //         AnimationType::Cube => {
-        //             particles.init_rand_sphere_animation(anim_duration);
-        //             AnimationType::RandSphere
-        //         },
-        //         AnimationType::RandSphere => {
-        //             // particles.init_rand_cube_animation(anim_duration);
-        //             // AnimationType::RandCube
-        //             particles.init_cube_animation(anim_duration);
-        //             AnimationType::Cube
-        //         },
-        //         AnimationType::RandCube => {
-        //             particles.init_cube_animation(anim_duration);
-        //             AnimationType::Cube
-        //         }
-        //     };
-        //     anim_timer = 0.00;
-        // }
+        if (update_particles == true) {
 
-        let mut frame = display.draw();
-        frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        draw(&mut frame, &camera, &particles);
+            if anim_timer <= anim_duration {
+                particles.update_animation(anim_timer);
+                anim_timer += 0.01;
+            }
+            // else {
+            //     anim_type = match anim_type {
+            //         AnimationType::Cube => {
+            //             particles.init_rand_sphere_animation(anim_duration);
+            //             AnimationType::RandSphere
+            //         },
+            //         AnimationType::RandSphere => {
+            //             particles.init_rand_cube_animation(anim_duration);
+            //             AnimationType::RandCube
+            //             // particles.init_cube_animation(anim_duration);
+            //             // AnimationType::Cube
+            //         },
+            //         AnimationType::RandCube => {
+            //             particles.init_cube_animation(anim_duration);
+            //             AnimationType::Cube
+            //         }
+            //     };
+            //     anim_timer = 0.00;
+            // }
+            else {
+                particles.update_gravitation(grav_point, global_timer);
+            }
+            let mut frame = display.draw();
+            frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+            draw(&mut frame, &camera, &particles);
+        }
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
         display.get_window().unwrap().set_title(&title);
