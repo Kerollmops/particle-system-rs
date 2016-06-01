@@ -30,6 +30,7 @@ const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
 // const BACKGROUND: (f32, f32, f32, f32) = (0.02343, 0.02343, 0.02343, 1.0);
 // const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
 const MAX_FPS: usize = 60;
+const WARP_SIZE: usize = 32;
 
 // FIXME delete
 enum AnimationType {
@@ -68,6 +69,7 @@ fn main() {
     let quantity: usize = env::args().nth(1)
                             .unwrap_or(String::from("1000000")).parse()
                             .unwrap_or_else(|err| { printlnc!(red: "{}", err); 1_000_000 });
+    let quantity = ((quantity / WARP_SIZE) + 1) * WARP_SIZE;
 
     let mut particles = match Particles::new(&display, context_cl, quantity) {
         Ok(particles) => particles,
@@ -79,7 +81,7 @@ fn main() {
     let mut global_timer = 0.0_f32; // FIXME use duration
     let mut anim_timer = 0.0_f32; // FIXME use duration
     let anim_duration = 0.7_f32;
-    let mut anim_type = AnimationType::Cube;
+    let mut anim_type = AnimationType::RandSphere;
     match anim_type {
         AnimationType::Cube => particles.init_cube_animation(anim_duration),
         AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),

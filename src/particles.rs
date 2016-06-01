@@ -11,6 +11,7 @@ use point::Point;
 
 const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");
 const FRAGMENT_SRC: &'static str = include_str!("shaders/default.frag");
+const GEOMETRY_SRC: &'static str = include_str!("shaders/default.geom");
 const PARTICLES_KERN_SRC: &'static str = include_str!("kernels/particles.cl");
 
 pub type PartResult<T> = Result<T, &'static str>;
@@ -64,7 +65,7 @@ impl Particles {
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC, None).unwrap()
+            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC, Some(GEOMETRY_SRC)).unwrap()
         };
 
         let prog_bldr = ClProgram::builder().src(PARTICLES_KERN_SRC);
