@@ -66,7 +66,7 @@ __kernel void init_rand_sphere_animation(global float3 const * const restrict po
     size_t const scal_rad = (radius / 2) * 10000;
     float const u = radians((float)(xorshift64star(idx >> 3) % 360));
     float const v = radians((float)(xorshift64star(idx << 2) % 360));
-    float const radius_rand = ((float)(xorshift64star(idx >> 2) % scal_rad)
+    float const radius_rand = ((float)(xorshift64star(idx >> 1) % scal_rad)
                                 + ((radius * 10000) - scal_rad)) / 10000.f;
 
     // http://www.wolframalpha.com/input/?i=sphere
@@ -91,9 +91,9 @@ __kernel void init_rand_cube_animation(global float3 const * const restrict posi
 
     size_t const diameter = radius * 2;
     float3 const center = (float3)(10.f, 10.f, 10.f);
-    float const x = (float)(xorshift64star(idx << 3) % (diameter * 10000)) / 10000.f;
-    float const y = (float)(xorshift64star(idx >> 2) % (diameter * 10000)) / 10000.f;
-    float const z = (float)(xorshift64star(idx << 2) % (diameter * 10000)) / 10000.f;
+    float const x = (float)(xorshift64star(idx >> 3) % (diameter * 10000)) / 10000.f;
+    float const y = (float)(xorshift64star(idx << 2) % (diameter * 10000)) / 10000.f;
+    float const z = (float)(xorshift64star(idx >> 1) % (diameter * 10000)) / 10000.f;
 
     from_vec[idx] = positions[idx];
     to_vec[idx] = (float3)(x, y, z);
@@ -142,8 +142,8 @@ __kernel void update_gravitation(global float3 * const restrict positions,
     float3 const unit_dir = dir / dist;
 
     positions[idx] += velocities[idx];
-    velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir; // classic
-    //velocities[idx] += (-G * 1.f * (dist * dist)) * unit_dir * 1000.f;
+    //velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir; // classic
+    velocities[idx] += (-G * 1.f * (dist * dist)) * unit_dir * 1000.f;
 
     /*
         float DeltaTimeSecs = gDeltaTimeMillis / 1000.0f;

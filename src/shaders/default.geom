@@ -2,7 +2,7 @@
 
 uniform mat4 matrix;
 uniform float aspect_ratio;
-uniform float sphere_diameter;
+uniform float circle_diameter;
 
 in vec3 v_color[];
 layout(points) in;
@@ -15,21 +15,23 @@ void main()
 {
     g_color = v_color[0];
     vec4 pos = gl_in[0].gl_Position;
-    float sphere_radius = sphere_diameter / 2.0;
+    float circle_radius = circle_diameter / 2.0;
+    float dist_x = circle_radius;
+    float dist_y = circle_radius * aspect_ratio;
 
-    g_uv_pos = vec2(-sphere_radius, -sphere_radius);
+    g_uv_pos = vec2(-dist_x, -dist_y);
     gl_Position = pos + vec4(g_uv_pos, 0.0, 0.0);
     EmitVertex();
 
-    g_uv_pos = vec2(sphere_radius, -sphere_radius);
+    g_uv_pos = vec2(dist_x, -dist_y);
     gl_Position = pos + vec4(g_uv_pos, 0.0, 0.0);
     EmitVertex();
 
-    g_uv_pos = vec2(-sphere_radius, sphere_radius);
+    g_uv_pos = vec2(-dist_x, dist_y);
     gl_Position = pos + vec4(g_uv_pos, 0.0, 0.0);
     EmitVertex();
 
-    g_uv_pos = vec2(sphere_radius, sphere_radius);
+    g_uv_pos = vec2(dist_x, dist_y);
     gl_Position = pos + vec4(g_uv_pos, 0.0, 0.0);
     EmitVertex();
 

@@ -39,11 +39,15 @@ enum AnimationType {
     RandSphere
 }
 
+fn resize_window(width: u32, height: u32) {
+    println!("resize: {:?}x{:?}", width, height);
+}
+
 fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
     let indices = NoIndices(PrimitiveType::Points);
     let uniforms = uniform!{
         matrix: *camera.matrix().as_ref(),
-        sphere_diameter: 0.002_f32,
+        circle_diameter: 0.002_f32,
         aspect_ratio: camera.screen_width() / camera.screen_height()
     };
     frame.draw(particles.positions(), &indices, particles.program(),
@@ -114,7 +118,7 @@ fn main() {
 
         global_timer += 0.01;
 
-        if (update_particles == true) {
+        if update_particles == true {
 
             if anim_timer <= anim_duration {
                 particles.update_animation(anim_timer);
