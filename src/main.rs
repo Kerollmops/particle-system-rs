@@ -44,6 +44,14 @@ fn resize_window(width: u32, height: u32) {
 }
 
 fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
+    let params = glium::DrawParameters {
+        depth: glium::Depth {
+            test: glium::DepthTest::IfLess,
+            write: true,
+            .. Default::default()
+        },
+        .. Default::default()
+    };
     let indices = NoIndices(PrimitiveType::Points);
     let uniforms = uniform!{
         matrix: *camera.matrix().as_ref(),
@@ -51,7 +59,7 @@ fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
         aspect_ratio: camera.screen_width() / camera.screen_height()
     };
     frame.draw(particles.positions(), &indices, particles.program(),
-        &uniforms, &Default::default()).unwrap();
+        &uniforms, &params).unwrap();
     frame.set_finish().unwrap();
 }
 

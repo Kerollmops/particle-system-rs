@@ -65,7 +65,8 @@ impl Particles {
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC, Some(GEOMETRY_SRC)).unwrap()
+            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC,
+                        Some(GEOMETRY_SRC)).unwrap()
         };
 
         let prog_bldr = ClProgram::builder().src(PARTICLES_KERN_SRC);
