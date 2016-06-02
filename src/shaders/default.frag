@@ -16,6 +16,9 @@ void main() {
     float circle_radius = circle_diameter / 2.0;
 
     // https://en.wikibooks.org/wiki/OpenGL_Programming/Depth_of_Field
+    // + motion blur
+    // https://www.shadertoy.com/view/XdXXz4
+    // https://www.shadertoy.com/view/MdSGDm
     // + shadows...
 
     if (dist <= circle_radius) {
