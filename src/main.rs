@@ -10,7 +10,7 @@ mod point;
 mod camera;
 
 use std::env;
-use glium::{DisplayBuild, Surface};
+use glium::{DisplayBuild, Surface, Texture2d};
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::{Escape, Space};
@@ -83,6 +83,7 @@ fn main() {
     }
 
     let mut camera = Camera::new(width, height);
+    let mut texture = Texture2d::empty(&display, width as u32, height as u32).unwrap();
     let grav_point = Point::new(0.0, 0.0, 0.0);
     let mut update_particles = true;
 
@@ -133,9 +134,12 @@ fn main() {
             }
         }
 
-        let mut frame = display.draw();
-        frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        camera.draw(&mut frame, &particles, global_timer);
+        let mut framebuffer = glium::framebuffer::SimpleFrameBuffer::new(&display, &texture).unwrap();
+        // let mut frame = display.draw();
+        // frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+        // camera.draw(&mut frame, &particles, global_timer);
+        camera.draw(&mut framebuffer, &particles, global_timer);
+        // frame.set_finish().unwrap();
         // println!("sin(time) = {:?}", (global_timer).sin());
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
