@@ -131,10 +131,12 @@ fn main() {
             else {
                 particles.update_gravitation(grav_point, global_timer);
             }
-            let mut frame = display.draw();
-            frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-            camera.draw(&mut frame, &particles);
         }
+
+        let mut frame = display.draw();
+        frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+        camera.draw(&mut frame, &particles, global_timer / 2.0);
+        println!("sin(time) = {:?}", (global_timer / 2.0).sin());
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
         display.get_window().unwrap().set_title(&title);

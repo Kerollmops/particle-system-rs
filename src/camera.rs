@@ -47,11 +47,12 @@ impl<'a> Camera<'a> {
         self.screen.width / self.screen.height
     }
 
-    pub fn draw(&self, frame: &mut Frame, particles: &Particles) {
+    pub fn draw(&self, frame: &mut Frame, particles: &Particles, time: f32) {
         let uniforms = uniform!{
             matrix: *self.matrix().as_ref(),
             circle_diameter: 0.002_f32,
-            aspect_ratio: self.aspect_ratio()
+            aspect_ratio: self.aspect_ratio(),
+            time: time
         };
         frame.draw(particles.positions(), &self.no_indices, particles.program(),
             &uniforms, &self.draw_parameters).unwrap();
