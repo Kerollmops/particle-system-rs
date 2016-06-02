@@ -1,12 +1,9 @@
 use std::result::Result;
-use glium::{VertexBuffer, GlObject, Frame, Surface, Program};
-use glium::index::{NoIndices, PrimitiveType};
+use glium::{VertexBuffer, GlObject, Program};
 use glium::backend::Facade;
-use nalgebra::{PerspectiveMatrix3, Isometry3, Point3, Vector3, ToHomogeneous};
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
 use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
-use camera::Camera;
 use point::Point;
 
 const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");

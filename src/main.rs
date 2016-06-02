@@ -14,9 +14,6 @@ use glium::{DisplayBuild, Surface};
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::{Escape, Space};
-use glium::index::{NoIndices, PrimitiveType};
-use glium::backend::Facade;
-use glium::Frame;
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
@@ -41,26 +38,6 @@ enum AnimationType {
 
 fn resize_window(width: u32, height: u32) {
     println!("resize: {:?}x{:?}", width, height);
-}
-
-fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
-    let params = glium::DrawParameters {
-        depth: glium::Depth {
-            test: glium::DepthTest::IfLess,
-            write: true,
-            .. Default::default()
-        },
-        .. Default::default()
-    };
-    let indices = NoIndices(PrimitiveType::Points);
-    let uniforms = uniform!{
-        matrix: *camera.matrix().as_ref(),
-        circle_diameter: 0.002_f32,
-        aspect_ratio: camera.screen_width() / camera.screen_height()
-    };
-    frame.draw(particles.positions(), &indices, particles.program(),
-        &uniforms, &params).unwrap();
-    frame.set_finish().unwrap();
 }
 
 fn main() {
@@ -156,7 +133,7 @@ fn main() {
             }
             let mut frame = display.draw();
             frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-            draw(&mut frame, &camera, &particles);
+            camera.draw(&mut frame, &particles);
         }
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
