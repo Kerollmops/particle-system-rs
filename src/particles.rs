@@ -6,9 +6,9 @@ use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
 use point::Point;
 
-const VERTEX_SRC: &'static str = include_str!("shaders/default.vert");
-const FRAGMENT_SRC: &'static str = include_str!("shaders/default.frag");
-const GEOMETRY_SRC: &'static str = include_str!("shaders/default.geom");
+const VERTEX_SRC: &'static str = include_str!("shaders/circles.vert");
+const FRAGMENT_SRC: &'static str = include_str!("shaders/circles.frag");
+const GEOMETRY_SRC: &'static str = include_str!("shaders/circles.geom");
 const PARTICLES_KERN_SRC: &'static str = include_str!("kernels/particles.cl");
 
 pub type PartResult<T> = Result<T, &'static str>;
