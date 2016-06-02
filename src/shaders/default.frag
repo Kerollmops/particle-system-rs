@@ -16,49 +16,9 @@ vec3    circle_texture(vec2 uv) {
     float circle_radius = circle_diameter / 2.0;
 
     if (dist > circle_radius) {
-        // discard;
-        return vec3(0.0); // background color
+        discard;
     }
     return g_color;
-}
-
-// vec3    texture(vec2 uv) {
-//     return texture2D(iChannel0, vec2(uv.x,1.-uv.y)).rgb;
-//     //return texture2D(iChannel0,uv).rgb;
-// }
-
-float   grid(float var, float size) {
-    return floor(var * size) / size;
-}
-
-float   rand(vec2 co){
-    return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
-}
-
-vec4    blur(vec2 uv) {
-
-    // float time = iGlobalTime;
-    // vec2 uv = (fragCoord.xy / iResolution.xy);
-
-    float bluramount = sin(time) * 0.1;
-    // if (iMouse.w >= 1.) {
-    //     bluramount = (iMouse.x / iResolution.x) / 10.;
-    // }
-
-    //float dists = 5.;
-    vec3 blurred_image = vec3(0.);
-    #define repeats 60.
-    for (float i = 0.; i < repeats; i++) {
-        vec2 q = vec2(cos(degrees((i / repeats) * 360.)), sin(degrees((i / repeats) * 360.))) * (rand(vec2(i, uv.x + uv.y)) + bluramount);
-        vec2 uv2 = uv + (q * bluramount);
-        blurred_image += circle_texture(uv2) / 2.;
-        //One more to hide the noise.
-        q = vec2(cos(degrees((i / repeats) * 360.)), sin(degrees((i / repeats) * 360.))) * (rand(vec2(i + 2., uv.x + uv.y + 24.)) + bluramount);
-        uv2 = uv + (q * bluramount);
-        blurred_image += circle_texture(uv2) / 2.;
-    }
-    blurred_image /= repeats;
-    return vec4(blurred_image, 1.0);
 }
 
 void    main() {
@@ -68,6 +28,6 @@ void    main() {
     // https://www.shadertoy.com/view/XdXXz4
     // https://www.shadertoy.com/view/MdSGDm
     // + shadows...
-    // f_color = BlurH(/* vec2(1024.0 * 40.0, 768.0),  */g_uv_pos, 20.0);
-    f_color = blur(g_uv_pos);
+
+    f_color = vec4(circle_texture(g_uv_pos), 1.0);
 }

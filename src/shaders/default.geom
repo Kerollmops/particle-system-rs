@@ -15,7 +15,7 @@ void main()
 {
     g_color = v_color[0];
     vec4 pos = gl_in[0].gl_Position;
-    float circle_radius = circle_diameter / 2.0;
+    float circle_radius = (circle_diameter)  / 2.0;
     float dist_x = circle_radius;
     float dist_y = circle_radius * aspect_ratio;
 

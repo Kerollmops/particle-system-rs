@@ -75,7 +75,7 @@ fn main() {
     let mut global_timer = 0.0_f32; // FIXME use duration
     let mut anim_timer = 0.0_f32; // FIXME use duration
     let anim_duration = 0.7_f32;
-    let mut anim_type = AnimationType::RandSphere;
+    let mut anim_type = AnimationType::RandCube;
     match anim_type {
         AnimationType::Cube => particles.init_cube_animation(anim_duration),
         AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),
@@ -135,8 +135,8 @@ fn main() {
 
         let mut frame = display.draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        camera.draw(&mut frame, &particles, global_timer / 2.0);
-        println!("sin(time) = {:?}", (global_timer / 2.0).sin());
+        camera.draw(&mut frame, &particles, global_timer);
+        // println!("sin(time) = {:?}", (global_timer).sin());
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
         display.get_window().unwrap().set_title(&title);

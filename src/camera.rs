@@ -20,7 +20,7 @@ pub struct Camera<'a> {
 
 impl<'a> Camera<'a> {
     pub fn new(width: f32, height: f32) -> Camera<'a> {
-        let eye_pos = Point3::new(1.0, 0.0, 0.0);
+        let eye_pos = Point3::new(1.0, -0.25, -0.5);
         let target = Point3::new(0.0, 0.0, 0.0);
         let draw_parameters = DrawParameters {
             depth: Depth {
