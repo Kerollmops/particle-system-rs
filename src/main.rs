@@ -11,6 +11,8 @@ mod camera;
 
 use std::env;
 use glium::{DisplayBuild, Surface, Texture2d};
+use glium::texture::depth_texture2d::DepthTexture2d;
+use glium::framebuffer::SimpleFrameBuffer;
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::{Escape, Space};
@@ -83,7 +85,11 @@ fn main() {
     }
 
     let mut camera = Camera::new(width, height);
-    let mut texture = Texture2d::empty(&display, width as u32, height as u32).unwrap();
+
+    let mut color_texture = Texture2d::empty(&display, width as u32, height as u32).unwrap();
+    let mut depth_texture = DepthTexture2d::empty(&display, width as u32, height as u32).unwrap();
+    let mut steps_frame = SimpleFrameBuffer::with_depth_buffer(&display, &color_texture, &depth_texture).unwrap();
+
     let grav_point = Point::new(0.0, 0.0, 0.0);
     let mut update_particles = true;
 
@@ -134,12 +140,13 @@ fn main() {
             }
         }
 
-        let mut framebuffer = glium::framebuffer::SimpleFrameBuffer::new(&display, &texture).unwrap();
-        // let mut frame = display.draw();
-        // frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        // camera.draw(&mut frame, &particles, global_timer);
-        camera.draw(&mut framebuffer, &particles, global_timer);
-        // frame.set_finish().unwrap();
+        let mut final_frame = display.draw();
+
+        final_frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+        steps_frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+        camera.draw(&mut steps_frame, &mut final_frame, &particles, global_timer);
+        final_frame.finish().unwrap();
+
         // println!("sin(time) = {:?}", (global_timer).sin());
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
