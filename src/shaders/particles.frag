@@ -3,7 +3,6 @@
 uniform sampler2D circle_texture;
 uniform float time;
 
-in vec3 g_color;
 in vec2 g_uv_pos;
 
 out vec4 f_color;
