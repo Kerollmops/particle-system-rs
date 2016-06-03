@@ -54,6 +54,7 @@ void    main() {
     float a = 40.0;
     uv *= vec2(1.0, -1.0);
 
-    f_color = vec4(generate_bokeh(tex, uv, r, a), 1.0);
-    // f_color = texture(tex, v_tex_coords);
+    // FIXME don't give black on background
+    // f_color = vec4(generate_bokeh(tex, uv, r, a), 1.0);
+    f_color = texture(tex, v_tex_coords);
 }
