@@ -13,8 +13,8 @@ void    main() {
     float dist = length(pos);
     float circle_radius = circle_diameter / 2.0;
 
-    if (dist > circle_radius) {
-        discard;
-    }
+    // if (dist > circle_radius) {
+    //     discard;
+    // }
     f_color = vec4(1.0, 1.0, 1.0, 1.0);
 }
