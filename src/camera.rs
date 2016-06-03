@@ -141,6 +141,7 @@ impl<'a> Camera<'a> {
             matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
             aspect_ratio: self.aspect_ratio(),
             tex: &self.depth_steps.color_texture,
+            resolution: [self.screen.width, self.screen.height],
             time: time
         };
 
