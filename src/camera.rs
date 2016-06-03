@@ -18,9 +18,10 @@ const CIRCLES_GEOM: &'static str = include_str!("shaders/circles.geom");
 const BLUR_QUAD_VERT: &'static str = include_str!("shaders/blur_quad.vert");
 const BLUR_QUAD_FRAG: &'static str = include_str!("shaders/blur_quad.frag");
 
-const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
-// const BACKGROUND: (f32, f32, f32, f32) = (0.02343, 0.02343, 0.02343, 1.0);
+// const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0); // sRGB
+const BACKGROUND: (f32, f32, f32, f32) = (0.026, 0.026, 0.026, 1.0); // ???
 // const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
+// const BACKGROUND: (f32, f32, f32, f32) = (1.0, 1.0, 1.0, 1.0);
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -117,14 +118,13 @@ impl<'a> Camera<'a> {
 
     pub fn draw(&self, facade: &GlutinFacade, particles: &Particles, time: f32) {
         let mut projection = self.projection;
-        // projection.set_znear_and_zfar(0.001, 0.1);
-
         let color_texture = &self.depth_steps.color_texture;
         let depth_texture = &self.depth_steps.depth_texture;
         let mut frame_texture = SimpleFrameBuffer::with_depth_buffer(facade,
                             color_texture, depth_texture).unwrap();
 
         // for pat in expr {
+            // projection.set_znear_and_zfar(0.001, 0.1);
             let matrix = (*projection.as_matrix()) * self.view.to_homogeneous();
             let circles_uniforms = uniform!{
                 matrix: *matrix.as_ref(),
@@ -139,7 +139,9 @@ impl<'a> Camera<'a> {
 
         let blur_quad_uniforms = uniform! {
             matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
-            tex: &self.depth_steps.color_texture // FIXME ! where is the depth_texture ???
+            aspect_ratio: self.aspect_ratio(),
+            tex: &self.depth_steps.color_texture,
+            time: time
         };
 
         let mut frame = (*facade).draw();
