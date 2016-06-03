@@ -1,13 +1,13 @@
 #version 400
 
-const vec2 madd = vec2(0.5, 0.5);
+uniform mat4 matrix;
 
-attribute vec2 vertexIn;
-varying vec2 textureCoord;
+in vec2 position;
+in vec2 tex_coords;
 
-out vec2 v_uv;
+out vec2 v_tex_coords;
 
 void main() {
-   textureCoord = vertexIn.xy * madd + madd; // scale vertex attribute to [0-1] range
-   gl_Position = vec4(vertexIn.xy, 0.0, 1.0);
+    gl_Position = matrix * vec4(position, 0.0, 1.0);
+    v_tex_coords = tex_coords;
 }

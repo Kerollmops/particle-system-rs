@@ -6,10 +6,7 @@ use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
 use point::Point;
 
-const VERTEX_SRC: &'static str = include_str!("shaders/circles.vert");
-const FRAGMENT_SRC: &'static str = include_str!("shaders/circles.frag");
-const GEOMETRY_SRC: &'static str = include_str!("shaders/circles.geom");
-const PARTICLES_KERN_SRC: &'static str = include_str!("kernels/particles.cl");
+const PARTICLES_CL: &'static str = include_str!("kernels/particles.cl");
 
 pub type PartResult<T> = Result<T, &'static str>;
 
@@ -28,8 +25,7 @@ implement_vertex!(Velocity, velocity);
 
 struct GlSide {
     positions: VertexBuffer<Position>,
-    velocities: VertexBuffer<Velocity>,
-    program: Program
+    velocities: VertexBuffer<Velocity>
 }
 
 struct Animation {
@@ -55,18 +51,16 @@ impl Particles {
     pub fn new<F: Facade>(facade: &F, context: Context, quantity: usize) -> PartResult<Particles> {
         match quantity {
             0 => { return Err("Cannot emit zero particles.") },
-            x if x > 3_000_032 => { return Err("Cannot emit more than 3 millions particles.") },
+            x if x > 3_100_000 => { return Err("Cannot emit more than 3 millions particles.") },
             _ => ()
         }
 
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC,
-                        Some(GEOMETRY_SRC)).unwrap()
+            velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap()
         };
 
-        let prog_bldr = ClProgram::builder().src(PARTICLES_KERN_SRC);
+        let prog_bldr = ClProgram::builder().src(PARTICLES_CL);
         let device = context.devices().first().unwrap().clone();
         let proque = ProQue::builder().context(context).prog_bldr(prog_bldr)
                         .device(device).dims([quantity]).build().unwrap();
@@ -169,9 +163,5 @@ impl Particles {
 
     pub fn positions(&self) -> &VertexBuffer<Position> {
         &self.gl_side.positions
-    }
-
-    pub fn program(&self) -> &Program {
-        &self.gl_side.program
     }
 }

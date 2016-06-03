@@ -10,9 +10,7 @@ mod point;
 mod camera;
 
 use std::env;
-use glium::{DisplayBuild, Surface, Texture2d};
-use glium::texture::depth_texture2d::DepthTexture2d;
-use glium::framebuffer::SimpleFrameBuffer;
+use glium::DisplayBuild;
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::{Escape, Space};
@@ -25,9 +23,6 @@ use particles::Particles;
 use camera::Camera;
 use point::Point;
 
-const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
-// const BACKGROUND: (f32, f32, f32, f32) = (0.02343, 0.02343, 0.02343, 1.0);
-// const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
 const MAX_FPS: usize = 60;
 const WARP_SIZE: usize = 32;
 
@@ -84,11 +79,7 @@ fn main() {
         AnimationType::RandSphere => particles.init_rand_sphere_animation(anim_duration),
     }
 
-    let mut camera = Camera::new(width, height);
-
-    let mut color_texture = Texture2d::empty(&display, width as u32, height as u32).unwrap();
-    let mut depth_texture = DepthTexture2d::empty(&display, width as u32, height as u32).unwrap();
-    let mut steps_frame = SimpleFrameBuffer::with_depth_buffer(&display, &color_texture, &depth_texture).unwrap();
+    let mut camera = Camera::new(&display, width, height);
 
     let grav_point = Point::new(0.0, 0.0, 0.0);
     let mut update_particles = true;
@@ -140,12 +131,7 @@ fn main() {
             }
         }
 
-        let mut final_frame = display.draw();
-
-        final_frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        steps_frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        camera.draw(&mut steps_frame, &mut final_frame, &particles, global_timer);
-        final_frame.finish().unwrap();
+        camera.draw(&display, &particles, global_timer);
 
         // println!("sin(time) = {:?}", (global_timer).sin());
 

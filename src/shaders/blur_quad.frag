@@ -1,17 +1,13 @@
 #version 400
 
-// Interpolated values from the vertex shaders
-in vec2 v_uv;
+uniform sampler2D tex;
 
-// Ouput data
-out vec3 f_color;
+in vec2 v_tex_coords;
 
-// Values that stay constant for the whole mesh.
-uniform sampler2D circles_texture;
+out vec4 f_color;
 
 void main() {
-    // Output f_color = color of the texture at the specified uv
-    f_color = texture(circles_texture, v_uv).rgb;
+    f_color = texture(tex, v_tex_coords);
 }
 
 // // Bokeh disc.
