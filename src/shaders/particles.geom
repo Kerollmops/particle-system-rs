@@ -15,20 +15,20 @@ void main() {
     float dist_x = circle_radius;
     float dist_y = circle_radius * aspect_ratio;
 
-    g_uv = vec2(-dist_x, -dist_y);
-    gl_Position = pos + vec4(g_uv, 0.0, 0.0);
+    gl_Position = pos + vec4(-dist_x, -dist_y, 0.0, 0.0);
+    g_uv = vec2(0.0, 0.0);
     EmitVertex();
 
-    g_uv = vec2(dist_x, -dist_y);
-    gl_Position = pos + vec4(g_uv, 0.0, 0.0);
+    gl_Position = pos + vec4(dist_x, -dist_y, 0.0, 0.0);
+    g_uv = vec2(1.0, 0.0);
     EmitVertex();
 
-    g_uv = vec2(-dist_x, dist_y);
-    gl_Position = pos + vec4(g_uv, 0.0, 0.0);
+    gl_Position = pos + vec4(-dist_x, dist_y, 0.0, 0.0);
+    g_uv = vec2(0.0, 1.0);
     EmitVertex();
 
-    g_uv = vec2(dist_x, dist_y);
-    gl_Position = pos + vec4(g_uv, 0.0, 0.0);
+    gl_Position = pos + vec4(dist_x, dist_y, 0.0, 0.0);
+    g_uv = vec2(1.0, 1.0);
     EmitVertex();
 
     EndPrimitive();
