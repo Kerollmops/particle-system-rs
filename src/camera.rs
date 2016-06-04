@@ -159,7 +159,6 @@ impl<'a> Camera<'a> {
     }
 
     pub fn draw(&self, facade: &GlutinFacade, particles: &Particles, time: f32) {
-        let mut projection = self.projection;
         let color_texture = &self.depth_steps.color_texture;
         let depth_texture = &self.depth_steps.depth_texture;
         let mut frame_texture = SimpleFrameBuffer::with_depth_buffer(facade,
@@ -169,41 +168,29 @@ impl<'a> Camera<'a> {
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
         // frame_texture.clear_color_srgb_and_depth((1.0, 0.0, 0.0, 0.0), 1.0);
 
-        // FIXME move me and generate me + change blur_radius format
-        // let range_blur = &[((0.1, 1.0), 2.5f32), ((0.001, 0.1), 0.0f32)];
-        let blur_values: &[f32] = &[0.0, 1.5, 2.5, 2.0, 1.5];
-        let depths: &[f32] = &[0.001, 0.01, 0.1, 0.7, 0.95, 1.0];
+        let matrix = (*self.projection.as_matrix()) * self.view.to_homogeneous();
+        let depth_steps_uniforms = uniform!{
+            matrix: *matrix.as_ref(),
+            resolution: [self.screen.width, self.screen.height],
+            circle_diameter: CIRCLE_DIAMETER,
+            circle_texture: &self.depth_steps.circle_texture,
+            // circle_texture: self.depth_steps.circle_texture.mipmap(0).unwrap().get_texture()
+        };
+        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0);
+        frame_texture.draw(particles.positions(), &self.depth_steps.indices,
+            &self.depth_steps.program, &depth_steps_uniforms,
+            &self.depth_steps.draw_parameters).unwrap();
 
-        // for &((znear, zfar), blur_radius) in range_blur {
-        for (near_far, &blur_radius) in depths.windows(2).zip(blur_values) {
-            let (znear, zfar) = (near_far[0], near_far[1]);
-
-            projection.set_znear_and_zfar(znear, zfar);
-            let matrix = (*projection.as_matrix()) * self.view.to_homogeneous();
-            let depth_steps_uniforms = uniform!{
-                matrix: *matrix.as_ref(),
-                resolution: [self.screen.width, self.screen.height],
-                circle_diameter: CIRCLE_DIAMETER,
-                circle_texture: &self.depth_steps.circle_texture,
-                // circle_texture: self.depth_steps.circle_texture.mipmap(0).unwrap().get_texture()
-            };
-            frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0);
-            frame_texture.draw(particles.positions(), &self.depth_steps.indices,
-                &self.depth_steps.program, &depth_steps_uniforms,
-                &self.depth_steps.draw_parameters).unwrap();
-
-            // let blur = if blur_radius == 0.0f32 { time * 2.0 } else { blur_radius };
-            let blur_quad_uniforms = uniform! {
-                matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
-                color_texture: color_texture,
-                depth_texture: depth_texture,
-                resolution: [self.screen.width, self.screen.height],
-                time: time * blur_radius
-            };
-            frame.draw(&self.blur_quad.vertex_buffer, &self.blur_quad.indices,
-                &self.blur_quad.program, &blur_quad_uniforms,
-                &self.blur_quad.draw_parameters).unwrap();
-        }
+        let blur_quad_uniforms = uniform! {
+            matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
+            color_texture: color_texture,
+            depth_texture: depth_texture,
+            resolution: [self.screen.width, self.screen.height],
+            time: time
+        };
+        frame.draw(&self.blur_quad.vertex_buffer, &self.blur_quad.indices,
+            &self.blur_quad.program, &blur_quad_uniforms,
+            &self.blur_quad.draw_parameters).unwrap();
 
         // println!("time: {:?}", time);
 

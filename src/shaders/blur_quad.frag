@@ -19,8 +19,8 @@ out vec4 f_color;
 // The compiler is a dunce I tells-ya!!
 #define GOLDEN_ANGLE 2.39996323
 
-// #define ITERATIONS 140
-#define ITERATIONS 50
+#define ITERATIONS 140
+// #define ITERATIONS 50
 
 mat2 rot = mat2(cos(GOLDEN_ANGLE), sin(GOLDEN_ANGLE), -sin(GOLDEN_ANGLE), cos(GOLDEN_ANGLE));
 
@@ -53,7 +53,10 @@ vec4    generate_bokeh(sampler2D color_tex, vec2 uv, float radius, float amount)
 void    main() {
     vec2 uv = v_tex_coords.xy;
     uv *= vec2(1.0, -1.0);
-    float r = 0.8 - 0.8 * cos((time * 0.2 + 0.5) * 6.283);
+    // float r = 0.8 - 0.8 * cos((time * 0.2 + 0.5) * 6.283);
+    // float r = cos(time);
+    // float r = texture(depth_texture, uv).x * 0.8;
+    float r = 0.5;
     float a = 40.0;
 
     // texture(depth_texture, uv).x
