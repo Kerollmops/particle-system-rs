@@ -3,7 +3,7 @@
 uniform sampler2D circle_texture;
 uniform float time;
 
-in vec2 g_uv_pos;
+in vec2 g_uv;
 
 out vec4 f_color;
 
@@ -32,6 +32,11 @@ void    main() {
     // + shadows...
 
     // FIXME need to use mipmaping here !
-    f_color = texture(circle_texture, g_uv_pos) * vec4(color, 1.0);
-    // f_color = circle_texture(g_uv_pos) * vec4(color, 1.0);
+    vec4 tex_color = texture(circle_texture, g_uv);
+    // if (tex_color.a == 0.0) {
+    //     discard;
+    // }
+    f_color = tex_color * vec4(color, 1.0);
+    // f_color = texture(circle_texture, g_uv) * vec4(color, 1.0);
+    // f_color = circle_texture(g_uv) * vec4(color, 1.0);
 }
