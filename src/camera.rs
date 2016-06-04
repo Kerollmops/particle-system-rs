@@ -6,6 +6,7 @@ use glium::Surface;
 use glium::texture::depth_texture2d::DepthTexture2d;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::framebuffer::SimpleFrameBuffer;
+use glium::Blend;
 use glium::index::{NoIndices, PrimitiveType};
 use glium::backend::Facade;
 use nalgebra::ToHomogeneous;
@@ -79,8 +80,13 @@ impl<'a> Camera<'a> {
                     Vertex { position: [ 1.0,  1.0], tex_coords: [1.0, 1.0] },
                     Vertex { position: [ 1.0, -1.0], tex_coords: [1.0, 0.0] } ]).unwrap();
 
+        let bq_draw_parameters = DrawParameters {
+            blend: Blend::alpha_blending(),
+            .. Default::default()
+        };
+
         let blur_quad = BlurQuad {
-            draw_parameters: Default::default(), // overwrite mode
+            draw_parameters: bq_draw_parameters,
             vertex_buffer: bq_vertex_buffer, // give this each time drawing
             indices: bq_index_buffer,
             program: Program::from_source(facade, BLUR_QUAD_VERT, BLUR_QUAD_FRAG, None).unwrap()
@@ -161,12 +167,17 @@ impl<'a> Camera<'a> {
 
         let mut frame = (*facade).draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        frame_texture.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+        // frame_texture.clear_color_srgb_and_depth((1.0, 0.0, 0.0, 0.0), 1.0);
 
         // FIXME move me and generate me + change blur_radius format
-        let range_blur = &[((0.1, 1.0), 2.5f32), ((0.001, 0.1), 0.0)];
+        // let range_blur = &[((0.1, 1.0), 2.5f32), ((0.001, 0.1), 0.0f32)];
+        let blur_values: &[f32] = &[0.0, 1.5, 2.5, 2.0, 1.5];
+        let depths: &[f32] = &[0.001, 0.01, 0.1, 0.7, 0.95, 1.0];
 
-        for &((znear, zfar), blur_radius) in range_blur {
+        // for &((znear, zfar), blur_radius) in range_blur {
+        for (near_far, &blur_radius) in depths.windows(2).zip(blur_values) {
+            let (znear, zfar) = (near_far[0], near_far[1]);
+
             projection.set_znear_and_zfar(znear, zfar);
             let matrix = (*projection.as_matrix()) * self.view.to_homogeneous();
             let depth_steps_uniforms = uniform!{
@@ -176,16 +187,17 @@ impl<'a> Camera<'a> {
                 circle_texture: &self.depth_steps.circle_texture,
                 // circle_texture: self.depth_steps.circle_texture.mipmap(0).unwrap().get_texture()
             };
-            // frame_texture.clear_color_srgb_and_depth(BACKGROUND, 1.0);
+            frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0);
             frame_texture.draw(particles.positions(), &self.depth_steps.indices,
                 &self.depth_steps.program, &depth_steps_uniforms,
                 &self.depth_steps.draw_parameters).unwrap();
 
+            // let blur = if blur_radius == 0.0f32 { time * 2.0 } else { blur_radius };
             let blur_quad_uniforms = uniform! {
                 matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
                 tex: &self.depth_steps.color_texture,
                 resolution: [self.screen.width, self.screen.height],
-                time: blur_radius
+                time: time * blur_radius
             };
             frame.draw(&self.blur_quad.vertex_buffer, &self.blur_quad.indices,
                 &self.blur_quad.program, &blur_quad_uniforms,
