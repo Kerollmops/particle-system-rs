@@ -195,7 +195,8 @@ impl<'a> Camera<'a> {
             // let blur = if blur_radius == 0.0f32 { time * 2.0 } else { blur_radius };
             let blur_quad_uniforms = uniform! {
                 matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
-                tex: &self.depth_steps.color_texture,
+                color_texture: color_texture,
+                depth_texture: depth_texture,
                 resolution: [self.screen.width, self.screen.height],
                 time: time * blur_radius
             };

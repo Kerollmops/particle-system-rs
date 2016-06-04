@@ -4,7 +4,8 @@
 // by David Hoskins.
 // License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 
-uniform sampler2D tex;
+uniform sampler2D color_texture;
+uniform sampler2D depth_texture;
 uniform vec2 resolution;
 uniform float time;
 
@@ -23,7 +24,7 @@ out vec4 f_color;
 
 mat2 rot = mat2(cos(GOLDEN_ANGLE), sin(GOLDEN_ANGLE), -sin(GOLDEN_ANGLE), cos(GOLDEN_ANGLE));
 
-vec4    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
+vec4    generate_bokeh(sampler2D color_tex, vec2 uv, float radius, float amount) {
     vec4 acc = vec4(0.0);
     vec4 div = vec4(0.0);
     vec2 pixel = 1.0 / resolution;
@@ -37,9 +38,9 @@ vec4    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
         vangle = rot * vangle;
         // (r - 1.0) here is the equivalent to sqrt(0, 1, 2, 3...)
         #ifdef USE_MIPMAP
-            vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25);
+            vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25);
         #else
-            vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle);
+            vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle);
         #endif
         // col = col * col * 1.5; // ...contrast it for better highlights - leave this out elsewhere.
         vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
@@ -51,9 +52,11 @@ vec4    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
 
 void    main() {
     vec2 uv = v_tex_coords.xy;
+    uv *= vec2(1.0, -1.0);
     float r = 0.8 - 0.8 * cos((time * 0.2 + 0.5) * 6.283);
     float a = 40.0;
-    uv *= vec2(1.0, -1.0);
 
-    f_color = generate_bokeh(tex, uv, r, a);
+    // texture(depth_texture, uv).x
+
+    f_color = generate_bokeh(color_texture, uv, r, a);
 }
