@@ -22,9 +22,9 @@ out vec4 f_color;
 
 mat2    rot = mat2(cos(GOLDEN_ANGLE), sin(GOLDEN_ANGLE), -sin(GOLDEN_ANGLE), cos(GOLDEN_ANGLE));
 
-vec3    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
-    vec3 acc = vec3(0.0);
-    vec3 div = vec3(0.0);
+vec4    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
+    vec4 acc = vec4(0.0);
+    vec4 div = vec4(0.0);
     vec2 pixel = 1.0 / resolution;
     float r = 1.0;
     vec2 vangle = vec2(0.0, radius); // Start angle
@@ -32,16 +32,16 @@ vec3    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
 
     for (int j = 0; j < ITERATIONS; j++)
     {
-        r += 1. / r;
+        r += 1.0 / r;
         vangle = rot * vangle;
         // (r - 1.0) here is the equivalent to sqrt(0, 1, 2, 3...)
         #ifdef USE_MIPMAP
-            vec3 col = texture(tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25).xyz;
+            vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25);
         #else
-            vec3 col = texture(tex, uv + pixel * (r - 1.0) * vangle).xyz;
+            vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle);
         #endif
-        col = col * col * 1.5; // ...contrast it for better highlights - leave this out elsewhere.
-        vec3 bokeh = pow(col, vec3(9.0)) * amount+.4;
+        // col = col * col * 1.5; // ...contrast it for better highlights - leave this out elsewhere.
+        vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
         acc += col * bokeh;
         div += bokeh;
     }
@@ -54,7 +54,9 @@ void    main() {
     float a = 40.0;
     uv *= vec2(1.0, -1.0);
 
-    // FIXME don't give black on background
-    // f_color = vec4(generate_bokeh(tex, uv, r, a), 1.0);
-    f_color = texture(tex, v_tex_coords);
+    f_color = generate_bokeh(tex, uv, r, a);
+    if (f_color.a < 1.0) {
+        discard;
+    }
+    // f_color = texture(tex, v_tex_coords);
 }
