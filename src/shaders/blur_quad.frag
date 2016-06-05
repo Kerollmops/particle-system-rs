@@ -37,26 +37,30 @@ float   interpolate_focus(float pos, float val[3]) {
 }
 
 vec4    generate_bokeh(sampler2D color_tex, sampler2D depth_tex, vec2 uv) {
+    float focus_values[3] = float[](1.0, 0.0, 1.0);
     vec4 acc = vec4(0.0);
     vec4 div = vec4(0.0);
     vec2 pixel = 1.0 / resolution;
     float r = 1.0;
-    float radius = 0.0;
     float amount = 40.0;
-    vec2 vangle = vec2(0.0, radius); // Start angle
-    amount += radius * 500.0;
 
     for (int j = 0; j < ITERATIONS; j++) {
+        float depth = texture(depth_tex, uv + pixel * (r - 1.0)).x;
+        float radius = interpolate_focus(depth, focus_values);
+        vec2 vangle = vec2(0.0, radius); // Start angle
+        float a = amount + radius * 500.0;
+
         r += 1.0 / r;
         vangle = rot * vangle;
+        vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle);
         // (r - 1.0) here is the equivalent to sqrt(0, 1, 2, 3...)
-        #ifdef USE_MIPMAP
-            vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25);
-            float depth = texture(depth_tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25).x;
-        #else
-            vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle);
-            float depth = texture(depth_tex, uv + pixel * (r - 1.0) * vangle).x;
-        #endif
+        // #ifdef USE_MIPMAP
+        //     vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25);
+        //     float depth = texture(depth_tex, uv + pixel * (r - 1.0) * vangle, radius * 1.25).x;
+        // #else
+        //     vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle);
+        //     float depth = texture(depth_tex, uv + pixel * (r - 1.0) * vangle).x;
+        // #endif
         // col = col * col * 1.5; // ...contrast it for better highlights - leave this out elsewhere.
         vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
         acc += col * vec4(bokeh.rgb * col.a, 1.0) * col.a;

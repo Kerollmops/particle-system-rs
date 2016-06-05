@@ -166,7 +166,7 @@ impl<'a> Camera<'a> {
 
         let mut frame = (*facade).draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        // frame_texture.clear_color_srgb_and_depth((1.0, 0.0, 0.0, 0.0), 1.0);
+        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0);
 
         let matrix = (*self.projection.as_matrix()) * self.view.to_homogeneous();
         let depth_steps_uniforms = uniform!{
@@ -176,7 +176,6 @@ impl<'a> Camera<'a> {
             circle_texture: &self.depth_steps.circle_texture,
             // circle_texture: self.depth_steps.circle_texture.mipmap(0).unwrap().get_texture()
         };
-        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0);
         frame_texture.draw(particles.positions(), &self.depth_steps.indices,
             &self.depth_steps.program, &depth_steps_uniforms,
             &self.depth_steps.draw_parameters).unwrap();
