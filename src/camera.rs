@@ -166,7 +166,7 @@ impl<'a> Camera<'a> {
 
         let mut frame = (*facade).draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0);
+        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0); // FIXME clear with another color
 
         let matrix = (*self.projection.as_matrix()) * self.view.to_homogeneous();
         let depth_steps_uniforms = uniform!{

@@ -40,6 +40,7 @@ fn resize_window(width: u32, height: u32) {
 fn main() {
     let (width, height) = (1024.0, 768.0);
     let display = glium::glutin::WindowBuilder::new()
+                    .with_vsync()
                     .with_dimensions(width as u32, height as u32)
                     .with_title(format!("Particle system in Rust ({} fps)", 30))
                     .build_glium().unwrap();
