@@ -150,7 +150,7 @@ impl<'a> Camera<'a> {
         };
 
         Camera {
-            projection: PerspectiveMatrix3::new(width / height, 60.0, 0.001, 100.0),
+            projection: PerspectiveMatrix3::new(width / height, 60.0, 0.001, 200.0),
             view: Isometry3::look_at_rh(&eye_pos, &target, &Vector3::new(0.0, 1.0, 0.0)),
             screen: Screen{ width: width, height: height },
             blur_quad: blur_quad,
