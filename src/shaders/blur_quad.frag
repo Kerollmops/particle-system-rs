@@ -61,5 +61,6 @@ void    main() {
 
     // texture(depth_texture, uv).x
 
-    f_color = generate_bokeh(color_texture, uv, r, a);
+    // f_color = generate_bokeh(color_texture, uv, r, a);
+    f_color = vec4(vec3((1.0 - texture(depth_texture, uv).x) * 100.0), 1.0);
 }
