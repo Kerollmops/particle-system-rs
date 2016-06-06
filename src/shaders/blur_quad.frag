@@ -56,6 +56,7 @@ vec4    generate_bokeh(sampler2D color_tex, sampler2D depth_tex, vec2 uv) {
     float amount = 40.0;
 
     float depth = texture(depth_tex, uv).x;
+    // float depth = (texture(depth_tex, uv).x + 1.0) / 2.0;
     // float focus = interpolate_focus(depth, 0.9, focus_values);
     // float focus = interpolate_focus(depth, (cos(time) + 1.0) / 2.0, focus_values);
     if (depth == 1.0) {
@@ -63,7 +64,10 @@ vec4    generate_bokeh(sampler2D color_tex, sampler2D depth_tex, vec2 uv) {
     }
     float focus = interpolate_focus(depth, 0.5, focus_values);
     // return vec4(focus * 50.0, 0.0, 0.0, 1.0);
-    return vec4((1.0 - depth) + 0.2, 0.0, 0.0, 1.0);
+    // if (focus >= 0.5 /* && depth <= 0.65 */) {
+    //     return vec4(vec3(1.0), 1.0);
+    // }
+    return vec4(focus, 1.0 - focus, 1.0, 1.0);
     float radius = focus;
     // return vec4(vec3(radius), 1.0);
     vec2 vangle = vec2(0.0, radius); // Start angle

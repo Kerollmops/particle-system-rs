@@ -170,7 +170,7 @@ impl<'a> Camera<'a> {
 
         let mut projection = self.projection;
         // println!("projection: {:?}", projection);
-        // projection.set_zfar((time.cos() + 1.0) / 2.0 * 200.0);
+        projection.set_znear(0.01 * ((time.cos() + 1.0) / 2.0));
         let matrix = (*projection.as_matrix()) * self.view.to_homogeneous();
         let depth_steps_uniforms = uniform!{
             matrix: *matrix.as_ref(),
