@@ -39,7 +39,7 @@ fn resize_window(width: u32, height: u32) {
 
 fn main() {
     let (width, height) = (1024.0, 768.0);
-    let display = glium::glutin::WindowBuilder::new()
+    let particles_display = glium::glutin::WindowBuilder::new()
                     .with_vsync()
                     .with_dimensions(width as u32, height as u32)
                     .with_title(format!("Particle system in Rust ({} fps)", 30))
@@ -63,7 +63,7 @@ fn main() {
                             .unwrap_or_else(|err| { printlnc!(red: "{}", err); 1_000_000 });
     let quantity = ((quantity / WARP_SIZE) + 1) * WARP_SIZE;
 
-    let mut particles = match Particles::new(&display, context_cl, quantity) {
+    let mut particles = match Particles::new(&particles_display, context_cl, quantity) {
         Ok(particles) => particles,
         Err(err) => { printlnc!(red: "{}", err); return ; }
     };
@@ -80,7 +80,7 @@ fn main() {
         AnimationType::RandSphere => particles.init_rand_sphere_animation(anim_duration),
     }
 
-    let camera = Camera::new(&display, width, height);
+    let camera = Camera::new(&particles_display, width, height);
 
     let grav_point = Point::new(0.0, 0.0, 0.0);
     let mut update_particles = true;
@@ -88,7 +88,7 @@ fn main() {
     let mut fps_counter = FPSCounter::new();
     loop {
         let frame_start_time = hertz::current_time_ns();
-        for event in display.poll_events() {
+        for event in particles_display.poll_events() {
             // println!("event: {:?}", event);
             match event {
                 Event::Closed
@@ -132,12 +132,12 @@ fn main() {
             }
         }
 
-        camera.draw(&display, &particles, global_timer);
+        camera.draw(&particles_display, &particles, global_timer);
 
         // println!("sin(time) = {:?}", (global_timer).sin());
 
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
-        display.get_window().unwrap().set_title(&title);
+        particles_display.get_window().unwrap().set_title(&title);
         hertz::sleep_for_constant_rate(MAX_FPS, frame_start_time);
     }
 }
