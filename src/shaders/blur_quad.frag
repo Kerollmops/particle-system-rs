@@ -55,31 +55,17 @@ vec4    generate_bokeh(sampler2D tex, vec2 uv) {
     float amount = 40.0;
 
     float depth = texture(tex, uv).w;
-    // float depth = (texture(depth_tex, uv).x + 1.0) / 2.0;
-    // float focus = interpolate_focus(depth, 0.9, focus_values);
-    // float focus = interpolate_focus(depth, (cos(time) + 1.0) / 2.0, focus_values);
-    if (depth == 1.0) {
-        return vec4(vec3(0.0), 1.0);
-    }
     float focus = interpolate_focus(depth, 0.5, focus_values);
-    // return vec4(focus * 50.0, 0.0, 0.0, 1.0);
-    // if (focus >= 0.5 /* && depth <= 0.65 */) {
-    //     return vec4(vec3(1.0), 1.0);
-    // }
-    return vec4(focus, 1.0 - focus, 1.0, 1.0);
     float radius = focus;
-    // return vec4(vec3(radius), 1.0);
     vec2 vangle = vec2(0.0, radius); // Start angle
     amount += radius * 500.0;
 
     for (int j = 0; j < ITERATIONS; j++) {
         r += 1.0 / r;
         vangle = rot * vangle;
-        float focus = interpolate_focus(depth, 0.5, focus_values);
-
         // vec4 col = vec4(vec3((1.0 - depth_col) * 100.0), 1.0);
-        // vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle);
-        vec4 col = vec4(vec3(focus), 1.0);
+        vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle);
+        // vec4 col = vec4(vec3(focus), 1.0);
 
         vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
         acc += col * vec4(bokeh.rgb * col.a, 1.0) * col.a;
@@ -92,17 +78,18 @@ void    main() {
     vec2 uv = v_tex_coords.xy;
     uv *= vec2(1.0, -1.0);
 
-    // f_color = generate_bokeh(col_depth_tex, uv);
+    f_color = generate_bokeh(col_depth_tex, uv);
     // f_color = vec4(vec3((1.0 - texture(col_depth_tex, uv).w)), 1.0);
 
-    float focus_values[3] = float[](1.0, 0.0, 1.0);
-    float depth = texture(col_depth_tex, uv).w;
+    // float focus_values[3] = float[](1.0, 0.0, 1.0);
+    // float depth = texture(col_depth_tex, uv).w;
 
-    if (depth >= 0.45 && depth <= 0.65) {
-        f_color = vec4(vec3(1.0, 0.0, 0.0), 1.0);
-        return ;
-    }
+    // float t = ((cos(time) + 1.0) / 4.0) + 0.005;
+    // if (depth > t - 0.005 && depth <= t + 0.005) {
+    //     f_color = vec4(vec3(1.0, 0.0, 0.0), 1.0);
+    //     return ;
+    // }
 
-    float focus = interpolate_focus(depth, 0.5, focus_values);
-    f_color = vec4(vec3(1.0 - focus), 1.0);
+    // float focus = interpolate_focus(depth, 0.5, focus_values);
+    // f_color = vec4(vec3(1.0 - focus), 1.0);
 }
