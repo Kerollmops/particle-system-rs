@@ -46,6 +46,34 @@ float   interpolate_focus(float pos, float middle, float val[3]) {
     }
 }
 
+// vec4    generate_bokeh(sampler2D tex, vec2 uv) {
+//     float focus_values[3] = float[](1.0, 0.0, 1.0);
+//     vec4 acc = vec4(0.0);
+//     vec4 div = vec4(0.0);
+//     vec2 pixel = 1.0 / resolution;
+//     float r = 1.0;
+//     float amount = 40.0;
+
+//     float depth = texture(tex, uv).w;
+//     float focus = interpolate_focus(depth, 0.5, focus_values);
+//     float radius = focus;
+//     vec2 vangle = vec2(0.0, radius); // Start angle
+//     amount += radius * 500.0;
+
+//     for (int j = 0; j < ITERATIONS; j++) {
+//         r += 1.0 / r;
+//         vangle = rot * vangle;
+//         // vec4 col = vec4(vec3((1.0 - depth_col) * 100.0), 1.0);
+//         vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle);
+//         // vec4 col = vec4(vec3(focus), 1.0);
+
+//         vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
+//         acc += col * vec4(bokeh.rgb * col.a, 1.0) * col.a;
+//         div += vec4(bokeh.rgb * col.a, 1.0);
+//     }
+//     return acc / div;
+// }
+
 vec4    generate_bokeh(sampler2D tex, vec2 uv) {
     float focus_values[3] = float[](1.0, 0.0, 1.0);
     vec4 acc = vec4(0.0);
@@ -55,18 +83,23 @@ vec4    generate_bokeh(sampler2D tex, vec2 uv) {
     float amount = 40.0;
 
     float depth = texture(tex, uv).w;
+    if (depth >= 0.45 && depth <= 0.55) {
+        return vec4(vec3(1.0, 0.0, 0.0), 1.0);
+    }
     float focus = interpolate_focus(depth, 0.5, focus_values);
-    float radius = focus;
+    return vec4(vec3(1.0 - focus) / 2.0, 1.0);
+    // float radius = clamp((1.0 - focus) * 100.0, 0.0, 1.0);
+    float radius = clamp(focus, 0.0, 1.0);
+    // return vec4(vec3(radius), 1.0);
     vec2 vangle = vec2(0.0, radius); // Start angle
     amount += radius * 500.0;
 
     for (int j = 0; j < ITERATIONS; j++) {
         r += 1.0 / r;
-        vangle = rot * vangle;
-        // vec4 col = vec4(vec3((1.0 - depth_col) * 100.0), 1.0);
-        vec4 col = texture(tex, uv + pixel * (r - 1.0) * vangle);
-        // vec4 col = vec4(vec3(focus), 1.0);
 
+        vangle = rot * vangle;
+        // vec4 col = texture(color_tex, uv + pixel * (r - 1.0) * vangle);
+        vec4 col = vec4(vec3((1.0 - texture(tex, uv + pixel * (r - 1.0) * vangle).w)), 1.0);
         vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
         acc += col * vec4(bokeh.rgb * col.a, 1.0) * col.a;
         div += vec4(bokeh.rgb * col.a, 1.0);
