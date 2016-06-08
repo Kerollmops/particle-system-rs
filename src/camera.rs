@@ -67,9 +67,6 @@ pub struct Camera<'a> {
 
 impl<'a> Camera<'a> {
     pub fn new<F: Facade>(facade: &F, width: f32, height: f32) -> Camera<'a> {
-        let eye_pos = Point3::new(1.0, -0.25, -0.5); // FIXME store this somewhere
-        let target = Point3::new(0.0, 0.0, 0.0);
-
         // building the index buffer
         let bq_index_buffer = IndexBuffer::new(facade, PrimitiveType::TriangleStrip,
                                 &[1 as u16, 2, 0, 3]).unwrap();
@@ -150,8 +147,11 @@ impl<'a> Camera<'a> {
             depth_texture: depth_texture
         };
 
+        let eye_pos = Point3::new(1.0, -0.25, -0.5); // FIXME store this somewhere
+        let target = Point3::new(0.0, 0.0, 0.0);
+
         Camera {
-            projection: PerspectiveMatrix3::new(width / height, 60.5, 0.001, 3.0),
+            projection: PerspectiveMatrix3::new(width / height, 60.5, 0.001, 2.0),
             view: Isometry3::look_at_rh(&eye_pos, &target, &Vector3::new(0.0, 1.0, 0.0)),
             screen: Screen{ width: width, height: height },
             blur_quad: blur_quad,
@@ -170,7 +170,6 @@ impl<'a> Camera<'a> {
         frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 1.0), 1.0); // FIXME clear with another color
 
         let mut projection = self.projection;
-        // let view = ;
         let mut view = self.view;
         let angle = Vector3::new(0.0, time.cos() / 3.0, 0.0);
         view = view.prepend_rotation(&angle);
@@ -181,10 +180,14 @@ impl<'a> Camera<'a> {
         // println!("fov {:?}", fov);
         // projection.set_fovy(fov);
 
-        let matrix = (*projection.as_matrix()) * (view.to_homogeneous());
+        // let matrix = (*projection.as_matrix()) * (view.to_homogeneous());
         let depth_steps_uniforms = uniform!{ // FIXME rename this
-            matrix: *matrix.as_ref(),
-            eye_pos: *(view.translation().as_ref()),
+            // matrix: *matrix.as_ref(),
+            projection: *projection.as_matrix().as_ref(),
+
+            view: *view.to_homogeneous().as_ref(),
+            eye_pos: *(view.translation()).as_ref(),
+
             znear: projection.znear(),
             zfar: projection.zfar(),
             resolution: [self.screen.width, self.screen.height],
