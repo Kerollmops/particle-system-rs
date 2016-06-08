@@ -105,40 +105,80 @@ float   interpolate_focus(float pos, float middle, float val[3]) {
     }
 }
 
-vec4    generate_bokeh(sampler2D tex, vec2 uv) {
-    float focus_values[3] = float[](1.0, 0.0, 1.0);
-    vec4 acc = vec4(0.0);
-    vec4 div = vec4(0.0);
+// vec4    generate_bokeh(sampler2D tex, vec2 uv) {
+//     float focus_values[3] = float[](1.0, 0.0, 1.0);
+//     vec4 acc = vec4(0.0);
+//     vec4 div = vec4(0.0);
+//     vec2 pixel = 1.0 / resolution;
+//     float r = 1.0;
+//     float a = 40.0;
+
+//     float depth = texture(tex, uv).w;
+//     if (depth == 1.0) {
+//         return vec4(vec3(0.0), 1.0);
+//     }
+//     // else if (depth > 0.2) {
+//     //     return vec4(vec3(interpolate_focus(depth, 0.5, focus_values)), 1.0);
+//     // }
+//     // float middle = (sin(time) + 1.0) / 2.0;
+//     float focus = interpolate_focus(depth, 0.5, focus_values);
+//     float radius = focus;
+//     vec2 vangle = vec2(0.0, radius); // Start angle
+//     float amount = a + radius * 500.0;
+
+//     for (int j = 0; j < ITERATIONS; j++) {
+//         r += 1.0 / r;
+
+//         // depth = texture(tex, uv + pixel * (r - 1.0)).w;
+//         // focus = interpolate_focus(depth, 0.5, focus_values);
+//         // radius = focus;
+//         // // vangle = vec2(0.0, radius);
+//         // amount = a + radius * 500.0;
+
+//         vangle = rot * vangle;
+//         vec4 col = vec4(texture(tex, uv + pixel * (r - 1.0) * vangle).rgb, 1.0);
+//         // vec4 col = vec4(vec3((1.0 - texture(tex, uv + pixel * (r - 1.0) * vangle).w)), 1.0);
+//         vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
+//         acc += col * vec4(bokeh.rgb * col.a, 1.0) * col.a;
+//         div += vec4(bokeh.rgb * col.a, 1.0);
+//     }
+//     return acc / div;
+// }
+
+// void    main() {
+//     vec2 uv = v_tex_coords.xy;
+//     uv *= vec2(1.0, -1.0);
+
+//     f_color = generate_bokeh(col_depth_tex, uv);
+// }
+
+vec4    generate_bokeh(sampler2D tex, vec2 uv, float radius, float zed) {
+    vec4 acc = vec4(0.0), div = acc;
     vec2 pixel = 1.0 / resolution;
     float r = 1.0;
-    float amount = 40.0;
-
-    float depth = texture(tex, uv).w;
-    if (depth == 1.0) {
-        return vec4(vec3(0.0), 1.0);
-    }
-    return vec4(vec3(interpolate_focus(depth, 0.5, focus_values)), 1.0);
-    float middle = (cos(time) + 1.0) / 2.0;
-    float focus = interpolate_focus(depth, middle, focus_values);
-    float radius = focus;
     vec2 vangle = vec2(0.0, radius); // Start angle
-    amount += radius * 500.0;
-
     for (int j = 0; j < ITERATIONS; j++) {
-        r += 1.0 / r;
-        vangle = rot * vangle;
+        r += 1. / r;
+        vangle *= rot;
         vec4 col = vec4(texture(tex, uv + pixel * (r - 1.0) * vangle).rgb, 1.0);
-        // vec4 col = vec4(vec3((1.0 - texture(tex, uv + pixel * (r - 1.0) * vangle).w)), 1.0);
-        vec4 bokeh = pow(col, vec4(9.0)) * amount + 0.4;
-        acc += col * vec4(bokeh.rgb * col.a, 1.0) * col.a;
-        div += vec4(bokeh.rgb * col.a, 1.0);
+        // float dim = smoothstep(1.0, 0.0, zed - col.w); // hermite interpolation
+        vec4 bokeh = (pow(col, vec4(9.0)) * 200.0 + 0.4) /* * col.w */; // ..Varies depending on intensity needed..
+
+        acc += col * bokeh;
+        div += bokeh;
     }
     return acc / div;
 }
 
+// https://www.shadertoy.com/view/ldG3W3
 void    main() {
+    float focus_values[3] = float[](1.0, 0.0, 1.0);
     vec2 uv = v_tex_coords.xy;
     uv *= vec2(1.0, -1.0);
 
-    f_color = generate_bokeh(col_depth_tex, uv);
+    float depth = texture(col_depth_tex, uv).w;
+    float focus = interpolate_focus(depth, 0.5, focus_values);
+    // depth = min(depth, 150.0);
+
+    f_color = generate_bokeh(col_depth_tex, uv, focus, focus);
 }

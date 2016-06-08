@@ -167,7 +167,7 @@ impl<'a> Camera<'a> {
 
         let mut frame = (*facade).draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 1.0), 1.0); // FIXME clear with another color
+        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 0.0, 1.0), 1.0); // FIXME clear with another color
 
         let mut projection = self.projection;
         let mut view = self.view;
@@ -180,15 +180,9 @@ impl<'a> Camera<'a> {
         // println!("fov {:?}", fov);
         // projection.set_fovy(fov);
 
-        // let matrix = (*projection.as_matrix()) * (view.to_homogeneous());
         let depth_steps_uniforms = uniform!{ // FIXME rename this
-            // matrix: *matrix.as_ref(),
             projection: *projection.as_matrix().as_ref(),
-
             view: *view.to_homogeneous().as_ref(),
-            eye_pos: *(view.translation()).as_ref(),
-
-            znear: projection.znear(),
             zfar: projection.zfar(),
             resolution: [self.screen.width, self.screen.height],
             circle_diameter: CIRCLE_DIAMETER,

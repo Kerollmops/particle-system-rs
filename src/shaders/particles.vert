@@ -2,8 +2,6 @@
 
 uniform mat4 projection;
 uniform mat4 view;
-uniform vec3 eye_pos;
-uniform float znear; // delete
 uniform float zfar;
 
 in vec4 position;
