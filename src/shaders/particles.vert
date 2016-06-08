@@ -2,6 +2,7 @@
 
 uniform mat4 matrix;
 uniform vec3 eye_pos;
+uniform float znear; // delete
 uniform float zfar;
 
 in vec4 position;

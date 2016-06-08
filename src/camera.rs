@@ -151,7 +151,7 @@ impl<'a> Camera<'a> {
         };
 
         Camera {
-            projection: PerspectiveMatrix3::new(width / height, 60.0, 0.001, 3.0),
+            projection: PerspectiveMatrix3::new(width / height, 60.5, 0.001, 3.0),
             view: Isometry3::look_at_rh(&eye_pos, &target, &Vector3::new(0.0, 1.0, 0.0)),
             screen: Screen{ width: width, height: height },
             blur_quad: blur_quad,
@@ -167,20 +167,25 @@ impl<'a> Camera<'a> {
 
         let mut frame = (*facade).draw();
         frame.clear_color_srgb_and_depth(BACKGROUND, 1.0);
-        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 0.0), 1.0); // FIXME clear with another color
+        frame_texture.clear_color_srgb_and_depth((0.0, 0.0, 1.0, 1.0), 1.0); // FIXME clear with another color
 
         let mut projection = self.projection;
+        // let view = ;
         let mut view = self.view;
-        // println!("projection: {:?}", projection);
-        // projection.set_zfar(1.0 + (time.cos() + 1.0));
         let angle = Vector3::new(0.0, time.cos() / 3.0, 0.0);
         view = view.prepend_rotation(&angle);
-        // projection.set_fovy(60.0 /*+ (time / 5.0).sin()*/);
+
+        // projection.set_zfar(1.0 + (time.cos() + 1.0));
+        // println!("projection: {:?}", projection);
+        // let fov = 60.0 + ((time / 5.0).sin()) + 1.0;
+        // println!("fov {:?}", fov);
+        // projection.set_fovy(fov);
 
         let matrix = (*projection.as_matrix()) * (view.to_homogeneous());
         let depth_steps_uniforms = uniform!{ // FIXME rename this
             matrix: *matrix.as_ref(),
             eye_pos: *(view.translation().as_ref()),
+            znear: projection.znear(),
             zfar: projection.zfar(),
             resolution: [self.screen.width, self.screen.height],
             circle_diameter: CIRCLE_DIAMETER,

@@ -17,7 +17,6 @@ void    main() {
         discard;
     }
     else {
-        f_color = tex_color * vec4(color, 1.0);
-        f_color.w = g_depth;
+        f_color = vec4(tex_color.rgb * color, g_depth);
     }
 }

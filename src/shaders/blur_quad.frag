@@ -83,11 +83,19 @@ vec4    generate_bokeh(sampler2D tex, vec2 uv) {
     float amount = 40.0;
 
     float depth = texture(tex, uv).w;
-    if (depth >= 0.45 && depth <= 0.55) {
-        return vec4(vec3(1.0, 0.0, 0.0), 1.0);
+
+    // if (depth >= 0.45 && depth <= 0.55) {
+    //     return vec4(vec3(1.0, 0.0, 0.0), 1.0);
+    // }
+    if (depth <= 0.40) {
+        return vec4(vec3(0.0, 0.0, 0.0), 1.0);
     }
+    // else if (depth > 0.55 && depth <= 0.65) {
+    //     return vec4(vec3(0.0, 1.0, 0.0), 1.0);
+    // }
+
     float focus = interpolate_focus(depth, 0.5, focus_values);
-    return vec4(vec3(1.0 - focus) / 2.0, 1.0);
+    return vec4(vec3(1.0 - focus, 0.0, 1.0), 1.0);
     // float radius = clamp((1.0 - focus) * 100.0, 0.0, 1.0);
     float radius = clamp(focus, 0.0, 1.0);
     // return vec4(vec3(radius), 1.0);
