@@ -72,7 +72,7 @@ fn main() {
 
     let program_start = PreciseTime::now();
     let mut animation_start = PreciseTime::now();
-    let anim_duration = Duration::milliseconds(1700);
+    let anim_duration = Duration::milliseconds(1000);
     let mut anim_type = AnimationType::RandCube;
     match anim_type {
         AnimationType::Cube => particles.init_cube_animation(anim_duration),
@@ -126,8 +126,10 @@ fn main() {
                     },
                     AnimationType::RandCube => {
                         animation_start = PreciseTime::now();
-                        particles.init_cube_animation(anim_duration);
-                        AnimationType::Cube
+                        // particles.init_cube_animation(anim_duration);
+                        // AnimationType::Cube
+                        particles.init_rand_sphere_animation(anim_duration);
+                        AnimationType::RandSphere
                     }
                 };
             }
