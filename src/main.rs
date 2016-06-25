@@ -1,5 +1,6 @@
 #[macro_use] extern crate glium;
 extern crate nalgebra;
+extern crate time;
 extern crate ocl;
 extern crate cgl;
 #[macro_use] extern crate colorify;
@@ -10,6 +11,7 @@ mod point;
 mod camera;
 
 use std::env;
+use time::{Duration, PreciseTime};
 use glium::DisplayBuild;
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
@@ -68,11 +70,10 @@ fn main() {
     };
     println!("{} particles will be emitted!", quantity);
 
-    // let start_animation = use std::time::Duration;
-    let mut global_timer = 0.0_f32; // FIXME use duration
-    let mut anim_timer = 0.0_f32; // FIXME use duration
-    let anim_duration = 0.7_f32;
-    let anim_type = AnimationType::RandCube;
+    let program_start = PreciseTime::now();
+    let mut animation_start = PreciseTime::now();
+    let anim_duration = Duration::milliseconds(1700);
+    let mut anim_type = AnimationType::RandCube;
     match anim_type {
         AnimationType::Cube => particles.init_cube_animation(anim_duration),
         AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),
@@ -85,13 +86,13 @@ fn main() {
     let mut update_particles = true;
 
     let mut fps_counter = FPSCounter::new();
-    loop {
+    'game: loop {
         let frame_start_time = hertz::current_time_ns();
         for event in display.poll_events() {
             // println!("event: {:?}", event);
             match event {
                 Event::Closed
-                | Event::KeyboardInput(Released, _, Some(Escape)) => { return ; },
+                | Event::KeyboardInput(Released, _, Some(Escape)) => { break 'game; },
                 Event::KeyboardInput(Released, _, Some(Space)) => {
                     update_particles = !update_particles;
                 },
@@ -99,39 +100,43 @@ fn main() {
             }
         }
 
-        global_timer += 0.01;
+        let elaps_time_program = program_start.to(PreciseTime::now());
 
         if update_particles == true {
-
-            if anim_timer <= anim_duration {
-                particles.update_animation(anim_timer);
-                anim_timer += 0.01;
+            let elaps_time_anim = animation_start.to(PreciseTime::now());
+            // println!("elaps_time_anim: {:?}", elaps_time_anim.num_milliseconds() as f32);
+            // println!("anim_duration: {:?}", anim_duration.num_milliseconds() as f32);
+            if elaps_time_anim <= anim_duration {
+                // println!("update!");
+                particles.update_animation(elaps_time_anim);
+            }
+            else {
+                anim_type = match anim_type {
+                    AnimationType::Cube => {
+                        animation_start = PreciseTime::now();
+                        particles.init_rand_sphere_animation(anim_duration);
+                        AnimationType::RandSphere
+                    },
+                    AnimationType::RandSphere => {
+                        animation_start = PreciseTime::now();
+                        particles.init_rand_cube_animation(anim_duration);
+                        AnimationType::RandCube
+                        // particles.init_cube_animation(anim_duration);
+                        // AnimationType::Cube
+                    },
+                    AnimationType::RandCube => {
+                        animation_start = PreciseTime::now();
+                        particles.init_cube_animation(anim_duration);
+                        AnimationType::Cube
+                    }
+                };
             }
             // else {
-            //     anim_type = match anim_type {
-            //         AnimationType::Cube => {
-            //             particles.init_rand_sphere_animation(anim_duration);
-            //             AnimationType::RandSphere
-            //         },
-            //         AnimationType::RandSphere => {
-            //             particles.init_rand_cube_animation(anim_duration);
-            //             AnimationType::RandCube
-            //             // particles.init_cube_animation(anim_duration);
-            //             // AnimationType::Cube
-            //         },
-            //         AnimationType::RandCube => {
-            //             particles.init_cube_animation(anim_duration);
-            //             AnimationType::Cube
-            //         }
-            //     };
-            //     anim_timer = 0.00;
+            //     particles.update_gravitation(grav_point, elaps_time_program);
             // }
-            else {
-                particles.update_gravitation(grav_point, global_timer);
-            }
         }
 
-        camera.draw(&display, &particles, global_timer);
+        camera.draw(&display, &particles, elaps_time_program);
 
         // println!("sin(time) = {:?}", (global_timer).sin());
 

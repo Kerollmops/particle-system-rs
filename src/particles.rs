@@ -4,6 +4,7 @@ use glium::backend::Facade;
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
 use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
+use time::Duration;
 use point::Point;
 
 const PARTICLES_CL: &'static str = include_str!("kernels/particles.cl");
@@ -84,11 +85,11 @@ impl Particles {
         })
     }
 
-    pub fn init_rand_sphere_animation(&mut self, duration: f32) {
+    pub fn init_rand_sphere_animation(&mut self, duration: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
-        self.cl_side.animation.duration = duration;
+        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
         self.cl_side.proque.create_kernel("init_rand_sphere_animation").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.animation.from)
@@ -100,11 +101,11 @@ impl Particles {
         self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn init_rand_cube_animation(&mut self, duration: f32) {
+    pub fn init_rand_cube_animation(&mut self, duration: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
-        self.cl_side.animation.duration = duration;
+        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
         self.cl_side.proque.create_kernel("init_rand_cube_animation").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.animation.from)
@@ -116,11 +117,11 @@ impl Particles {
         self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn init_cube_animation(&mut self, duration: f32) {
+    pub fn init_cube_animation(&mut self, duration: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
-        self.cl_side.animation.duration = duration;
+        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
         self.cl_side.proque.create_kernel("init_cube_animation").unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.animation.from)
@@ -132,21 +133,21 @@ impl Particles {
         self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn update_animation(&mut self, time: f32) {
+    pub fn update_animation(&mut self, time: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
 
         self.cl_side.proque.create_kernel("update_animation").unwrap()
             .arg_buf(&self.cl_side.animation.from)
             .arg_buf(&self.cl_side.animation.to)
             .arg_buf(&self.cl_side.positions)
-            .arg_scl(time)
+            .arg_scl(time.num_milliseconds() as f32)
             .arg_scl(self.cl_side.animation.duration)
             .enq().unwrap();
 
         self.cl_side.positions.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn update_gravitation(&mut self, gravity_point: Point, t: f32) {
+    pub fn update_gravitation(&mut self, gravity_point: Point, time: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
@@ -154,7 +155,7 @@ impl Particles {
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.velocities)
             .arg_vec(gravity_point)
-            .arg_scl(t)
+            .arg_scl(time.num_milliseconds() as f32)
             .enq().unwrap();
 
         self.cl_side.positions.cmd().gl_release().enq().unwrap();

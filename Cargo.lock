@@ -8,7 +8,8 @@ dependencies = [
  "glium 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hertz 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "ocl 0.10.0 (git+https://github.com/Kerosene2000/ocl.git?rev=a2e5480)",
+ "ocl 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -407,7 +408,7 @@ dependencies = [
 [[package]]
 name = "ocl"
 version = "0.10.0"
-source = "git+https://github.com/Kerosene2000/ocl.git?rev=a2e5480#a2e5480d13d385c61b1ebabf9761dd27de379a1d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum_primitive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

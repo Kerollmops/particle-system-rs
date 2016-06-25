@@ -8,6 +8,7 @@ use glium::framebuffer::SimpleFrameBuffer;
 use glium::index::{IndicesSource, NoIndices, PrimitiveType};
 use glium::uniforms::Uniforms;
 use glium::backend::Facade;
+use time::Duration;
 use nalgebra::{ToHomogeneous, Identity};
 use particles::Particles;
 
@@ -116,7 +117,7 @@ impl<'a> Camera<'a> {
         self.screen.width / self.screen.height
     }
 
-    pub fn draw(&self, facade: &GlutinFacade, particles: &Particles, time: f32) {
+    pub fn draw(&self, facade: &GlutinFacade, particles: &Particles, time: Duration) {
         let mut projection = self.projection;
         let color_texture = &self.depth_steps.color_texture;
         let depth_texture = &self.depth_steps.depth_texture;
@@ -130,7 +131,7 @@ impl<'a> Camera<'a> {
                 matrix: *matrix.as_ref(),
                 circle_diameter: 0.002_f32,
                 aspect_ratio: self.aspect_ratio(),
-                time: time
+                time: time.num_milliseconds() as f32
             };
             frame_texture.clear_color_srgb_and_depth(BACKGROUND, 1.0);
             frame_texture.draw(particles.positions(), &self.depth_steps.indices,
@@ -142,7 +143,7 @@ impl<'a> Camera<'a> {
             aspect_ratio: self.aspect_ratio(),
             tex: &self.depth_steps.color_texture,
             resolution: [self.screen.width, self.screen.height],
-            time: time
+            time: time.num_milliseconds() as f32
         };
 
         let mut frame = (*facade).draw();
