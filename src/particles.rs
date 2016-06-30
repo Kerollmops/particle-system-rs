@@ -6,6 +6,7 @@ use ocl::{Buffer, ProQue, Context, Program as ClProgram};
 use ocl::builders::BuildOpt;
 use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
+use animation::{Animation, AnimationType};
 use time::Duration;
 use point::Point;
 
@@ -14,7 +15,7 @@ const MAX_QUANTITY: usize = 3_000_000;
 const WARP_SIZE: usize = 32;
 const PARTICLES_CL: &'static str = include_str!("kernels/particles.cl");
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AnimationFunction {
     SineEaseInOut,
     BackEaseInOut,
@@ -41,7 +42,7 @@ struct GlSide {
     velocities: VertexBuffer<Velocity>
 }
 
-struct Animation {
+struct AnimationBuffers {
     from: Buffer<ClFloat3>,
     to: Buffer<ClFloat3>,
     duration: f32
@@ -50,7 +51,7 @@ struct Animation {
 struct ClSide {
     positions: Buffer<ClFloat3>,
     velocities: Buffer<ClFloat3>,
-    animation: Animation,
+    animation: AnimationBuffers,
     anim_func: AnimationFunction,
     context: Context,
     proque: ProQue
@@ -116,6 +117,16 @@ impl Into<&'static str> for AnimationFunction {
     }
 }
 
+impl Into<&'static str> for AnimationType {
+    fn into(self) -> &'static str {
+        match self {
+            AnimationType::RandCube => "init_rand_cube_animation",
+            AnimationType::Cube => "init_cube_animation",
+            AnimationType::RandSphere => "init_rand_sphere_animation",
+        }
+    }
+}
+
 impl ClSide {
     pub fn new(proque: ProQue, context: Context, gl_side: &GlSide,
                quantity: usize, anim_func: AnimationFunction) -> ClSide {
@@ -124,7 +135,7 @@ impl ClSide {
                         [quantity], gl_side.positions.get_id()).unwrap(),
             velocities: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
                         [quantity], gl_side.velocities.get_id()).unwrap(),
-            animation: Animation {
+            animation: AnimationBuffers {
                 from: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
                 to: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
                 duration: Default::default(),
@@ -152,26 +163,25 @@ impl Particles {
     }
 
     pub fn change_animation_function(&mut self, anim_func: AnimationFunction) {
-        self.cl_side.anim_func = anim_func;
-        self.cl_side = create_cl_side_animation(self.cl_side.anim_func,
-                        self.cl_side.context.clone(),
-                        &self.gl_side,
-                        self.quantity);
+        if self.cl_side.anim_func != anim_func {
+            self.cl_side.anim_func = anim_func;
+            self.cl_side = create_cl_side_animation(self.cl_side.anim_func,
+                            self.cl_side.context.clone(),
+                            &self.gl_side,
+                            self.quantity);
+        }
     }
 
     pub fn animation_function(&self) -> AnimationFunction {
         self.cl_side.anim_func
     }
 
-    pub fn init_rand_sphere_animation(&mut self, duration: Duration) {
+    pub fn reset(&mut self) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
-        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
-        self.cl_side.proque.create_kernel("init_rand_sphere_animation").unwrap()
+        self.cl_side.proque.create_kernel("reset").unwrap()
             .arg_buf(&self.cl_side.positions)
-            .arg_buf(&self.cl_side.animation.from)
-            .arg_buf(&self.cl_side.animation.to)
             .arg_buf(&self.cl_side.velocities)
             .enq().unwrap();
 
@@ -179,28 +189,14 @@ impl Particles {
         self.cl_side.velocities.cmd().gl_release().enq().unwrap();
     }
 
-    pub fn init_rand_cube_animation(&mut self, duration: Duration) {
+    pub fn init_animation(&mut self, duration: Duration, anim_type: AnimationType) {
+        let anim_func = anim_type.into();
+        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
+
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
         self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
 
-        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
-        self.cl_side.proque.create_kernel("init_rand_cube_animation").unwrap()
-            .arg_buf(&self.cl_side.positions)
-            .arg_buf(&self.cl_side.animation.from)
-            .arg_buf(&self.cl_side.animation.to)
-            .arg_buf(&self.cl_side.velocities)
-            .enq().unwrap();
-
-        self.cl_side.positions.cmd().gl_release().enq().unwrap();
-        self.cl_side.velocities.cmd().gl_release().enq().unwrap();
-    }
-
-    pub fn init_cube_animation(&mut self, duration: Duration) {
-        self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
-        self.cl_side.velocities.cmd().gl_acquire().enq().unwrap();
-
-        self.cl_side.animation.duration = duration.num_milliseconds() as f32;
-        self.cl_side.proque.create_kernel("init_cube_animation").unwrap()
+        self.cl_side.proque.create_kernel(anim_func).unwrap()
             .arg_buf(&self.cl_side.positions)
             .arg_buf(&self.cl_side.animation.from)
             .arg_buf(&self.cl_side.animation.to)

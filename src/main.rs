@@ -18,7 +18,7 @@ use time::{Duration, PreciseTime};
 use glium::DisplayBuild;
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
-use glium::glutin::VirtualKeyCode::{Escape, Space, C, S, E, Q};
+use glium::glutin::VirtualKeyCode::{Escape, Space, C, S, E, Q, R};
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
@@ -55,9 +55,9 @@ fn main() {
 
     println!("Device used: {:?}", device.info(DeviceInfo::Name));
 
-    let cgl_current_ctx = unsafe { CGLGetCurrentContext() };
-    let cgl_share_grp = unsafe { CGLGetShareGroup(cgl_current_ctx) };
-    let properties = ContextProperties::new().cgl_sharegroup(cgl_share_grp);
+    let cgl_current_context = unsafe { CGLGetCurrentContext() };
+    let cgl_share_group = unsafe { CGLGetShareGroup(cgl_current_context) };
+    let properties = ContextProperties::new().cgl_sharegroup(cgl_share_group);
     let context_cl = Context::builder().properties(properties)
                         .devices(DeviceSpecifier::Single(*device))
                         .build().unwrap();
@@ -85,6 +85,9 @@ fn main() {
                 Event::KeyboardInput(Released, _, Some(C)) => {
                     animation.set_animation(AnimationType::RandCube);
                     animation.init_now(&mut particles);
+                }
+                Event::KeyboardInput(Released, _, Some(R)) => {
+                    particles.reset();
                 }
                 Event::KeyboardInput(Released, _, Some(S)) => {
                     animation.set_animation(AnimationType::RandSphere);

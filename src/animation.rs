@@ -32,12 +32,16 @@ impl Animation {
         }
     }
 
+    pub fn animation_type(&self) -> AnimationType {
+        self.anim_type
+    }
+
+    pub fn duration(&self) -> Duration {
+        self.duration
+    }
+
     pub fn init_now(&mut self, particles: &mut Particles) {
-        match self.anim_type {
-            AnimationType::Cube => particles.init_cube_animation(self.duration),
-            AnimationType::RandCube => particles.init_rand_cube_animation(self.duration),
-            AnimationType::RandSphere => particles.init_rand_sphere_animation(self.duration),
-        };
+        particles.init_animation(self.duration, self.anim_type);
         self.start = PreciseTime::now();
         self.currently_in_animation = true
     }

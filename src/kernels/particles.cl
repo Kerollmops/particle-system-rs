@@ -146,6 +146,15 @@ __kernel void init_cube_animation(global float3 const * const restrict positions
     velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
 }
 
+__kernel void reset(global float3 * const restrict positions,
+                    global float3 * const restrict velocities)
+{
+    size_t const idx = get_global_id(0);
+
+    positions[idx] = (float3)(0.0f, 0.0f, 0.0f);
+    velocities[idx] = (float3)(0.0f, 0.0f, 0.0f);
+}
+
 #define G 0.00000066742f
 
 __kernel void update_gravitation(global float3 * const restrict positions,
@@ -159,8 +168,10 @@ __kernel void update_gravitation(global float3 * const restrict positions,
     float3 const unit_dir = dir / dist;
 
     positions[idx] += velocities[idx];
-    velocities[idx] += (-G * 1.f / (dist * dist)) * unit_dir; // classic
-    //velocities[idx] += (-G * 1.f * (dist * dist)) * unit_dir * 1000.f;
+    velocities[idx] += (-1.f / (1.0f + dist * dist)) * unit_dir; // classic
+    //float3 vec = gravity_point - positions[idx];
+    //velocities[idx] += vec * 1.f / (1.f + dot(vec, vec));
+    // velocities[idx] += vec * 100.f / (1.f + sqrt(length(vec)));
 
     /*
         float DeltaTimeSecs = gDeltaTimeMillis / 1000.0f;
