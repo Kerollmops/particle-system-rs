@@ -1,15 +1,26 @@
 use std::result::Result;
+use std::convert::Into;
 use glium::{VertexBuffer, GlObject, Program};
 use glium::backend::Facade;
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
+use ocl::builders::BuildOpt;
 use ocl::aliases::ClFloat3;
 use ocl::core::MEM_READ_WRITE;
 use time::Duration;
 use point::Point;
 
+const DEFAULT_QUANTITY: usize = 1_000_000;
+const MAX_QUANTITY: usize = 3_000_000;
+const WARP_SIZE: usize = 32;
 const PARTICLES_CL: &'static str = include_str!("kernels/particles.cl");
 
-pub type PartResult<T> = Result<T, &'static str>;
+pub enum AnimationFunction {
+    SineEaseInOut,
+    BackEaseInOut,
+    QuadEaseInOut,
+    BackEaseOut,
+    ElasticEaseOut,
+}
 
 #[derive(Copy, Clone)]
 pub struct Position {
@@ -39,6 +50,7 @@ struct ClSide {
     positions: Buffer<ClFloat3>,
     velocities: Buffer<ClFloat3>,
     animation: Animation,
+    context: Context,
     proque: ProQue
 }
 
@@ -48,25 +60,62 @@ pub struct Particles {
     cl_side: ClSide
 }
 
-impl Particles {
-    pub fn new<F: Facade>(facade: &F, context: Context, quantity: usize) -> PartResult<Particles> {
-        match quantity {
-            0 => { return Err("Cannot emit zero particles.") },
-            x if x > 3_100_000 => { return Err("Cannot emit more than 3 millions particles.") },
-            _ => ()
+pub fn retrieve_quantity(first_arg: Option<String>) -> usize {
+    if let Some(str_quantity) = first_arg {
+        if let Ok(quantity) = str_quantity.parse() {
+            return quantity;
         }
+    }
+    DEFAULT_QUANTITY
+}
 
-        let gl_side = GlSide {
-            positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap()
-        };
+pub fn correct_quantity(quantity: usize) -> Result<usize, &'static str> {
+    if quantity == 0 {
+        Err("Cannot emit zero particles.")
+    }
+    else if quantity > MAX_QUANTITY {
+        Err("Cannot emit more than 3 millions particles.")
+    }
+    else {
+        Ok(((quantity / WARP_SIZE) + 1) * WARP_SIZE)
+    }
+}
 
-        let prog_bldr = ClProgram::builder().src(PARTICLES_CL);
-        let device = context.devices().first().unwrap().clone();
-        let proque = ProQue::builder().context(context).prog_bldr(prog_bldr)
-                        .device(device).dims([quantity]).build().unwrap();
+fn compute_proque(context: Context, build_option: BuildOpt, quantity: usize) -> ProQue {
+    let prog_bldr = ClProgram::builder().bo(build_option).src(PARTICLES_CL);
+    let device = context.devices().first().unwrap().clone();
+    ProQue::builder().context(context).prog_bldr(prog_bldr).device(device)
+            .dims([quantity]).build().unwrap()
+}
 
-        let cl_side = ClSide {
+fn create_cl_side_animation(animation: &'static str,
+                            context: Context,
+                            gl_side: &GlSide,
+                            quantity: usize) -> ClSide {
+
+    let easing_animation = BuildOpt::CmplrDefine {
+        ident: "EASING_ANIMATION".into(),
+        val: animation.into(),
+    };
+    let proque = compute_proque(context.clone(), easing_animation, quantity);
+    ClSide::new(proque, context, &gl_side, quantity)
+}
+
+impl Into<&'static str> for AnimationFunction {
+    fn into(self) -> &'static str {
+        match self {
+            AnimationFunction::SineEaseInOut => "sine_ease_in_out",
+            AnimationFunction::BackEaseInOut => "back_ease_in_out",
+            AnimationFunction::QuadEaseInOut => "quad_ease_in_out",
+            AnimationFunction::BackEaseOut => "back_ease_out",
+            AnimationFunction::ElasticEaseOut => "elastic_ease_out",
+        }
+    }
+}
+
+impl ClSide {
+    pub fn new(proque: ProQue, context: Context, gl_side: &GlSide, quantity: usize) -> ClSide {
+        ClSide {
             positions: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
                         [quantity], gl_side.positions.get_id()).unwrap(),
             velocities: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
@@ -74,15 +123,33 @@ impl Particles {
             animation: Animation {
                 from: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
                 to: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
-                duration: 0.0_f32,
+                duration: Default::default(),
             },
+            context: context,
             proque: proque
+        }
+    }
+}
+
+impl Particles {
+    pub fn new<F: Facade>(facade: &F, context: Context, quantity: usize) -> Particles {
+        let gl_side = GlSide {
+            positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
+            velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap()
         };
-        Ok(Particles {
+        let cl_side = create_cl_side_animation("quad_ease_in_out", context, &gl_side, quantity);
+        Particles {
             quantity: quantity,
             gl_side: gl_side,
             cl_side: cl_side
-        })
+        }
+    }
+
+    pub fn change_animation_function(&mut self, anim_func: AnimationFunction) {
+        self.cl_side = create_cl_side_animation(anim_func.into(),
+                        self.cl_side.context.clone(),
+                        &self.gl_side,
+                        self.quantity);
     }
 
     pub fn init_rand_sphere_animation(&mut self, duration: Duration) {
@@ -135,10 +202,6 @@ impl Particles {
 
     pub fn update_animation(&mut self, time: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
-
-        println!("time: {:?}, duration: {:?}",
-                time.num_milliseconds() as f32,
-                self.cl_side.animation.duration);
 
         self.cl_side.proque.create_kernel("update_animation").unwrap()
             .arg_buf(&self.cl_side.animation.from)

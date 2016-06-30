@@ -7,8 +7,10 @@ authors = ["Clément Renault <renault.cle@gmail.com>"]
 glium = "0.14"
 nalgebra = "0.8"
 cgl = "0.1"
-ocl = "0.10"
+# ocl = "0.10"
+ocl = { git = "https://github.com/Kerosene2000/ocl.git", rev = "6a0f77f" }
 time = "0.1"
 colorify = "0.2"
 fps_counter = "0.2"
 hertz = "0.2"
+rustyline = "0.2"

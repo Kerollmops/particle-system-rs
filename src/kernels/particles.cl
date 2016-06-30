@@ -1,12 +1,27 @@
-static float quad_ease_in_out(float t, float b, float c, float d) {
+static float sine_ease_in_out(float t, float b, float c, float d) {
+    return -c / 2.0f * ((cos(M_PI_F * t / d)) - 1.0f) + b;
+}
+
+static float back_ease_in_out(float t, float b, float c, float d) {
+    float s = 1.70158f;
     float inner_t = t / (d / 2.0f);
-
     if (inner_t < 1.0f) {
-        return (c / 2.0f * (pow(inner_t, 2))) + b;
+        s *= 1.525f;
+        return c / 2.0f * (inner_t * inner_t * ((s + 1.0f) * inner_t - s)) + b;
     }
+    inner_t -= 2.0f;
+    float post_fix = inner_t;
+    float inner_s = s * 1.525f;
+    return c / 2.0f * (post_fix * inner_t * ((inner_s + 1.0f) * inner_t + inner_s) + 2.0f) + b;
+}
 
-    float temp = inner_t - 1.0f;
-    return (-c / 2.0f * (((inner_t - 2.0f) * (temp)) - 1.0f) + b);
+static float quad_ease_in_out(float t, float b, float c, float d) {
+    t /= d / 2.0f;
+    if (t < 1.0f) {
+        return c / 2.0f * t * t + b;
+    }
+    t--;
+    return -c / 2.0f * (t * (t - 2.0f) - 1.0f) + b;
 }
 
 static float back_ease_out(float t, float b, float c, float d) {
@@ -32,7 +47,9 @@ static float elastic_ease_out(float t, float b, float c, float d) {
     return (a * pow(2.0f, -10.0f * inner_t) * sin(temp) + c + b);
 }
 
-#define EASING_ANIMATION elastic_ease_out
+#ifndef EASING_ANIMATION
+# define EASING_ANIMATION quad_ease_in_out
+#endif
 
 __kernel void update_animation(global float3 const * const restrict from_vec,
                                global float3 const * const restrict to_vec,
@@ -63,7 +80,7 @@ __kernel void init_rand_sphere_animation(global float3 const * const restrict po
     float const scaling = 1.f / 15.f;
     size_t const radius = 10;
 
-    size_t const scal_rad = (radius / 2) * 10000;
+    size_t const scal_rad = radius * 10000;
     float const u = radians((float)(xorshift64star(idx >> 3) % 360));
     float const v = radians((float)(xorshift64star(idx << 2) % 360));
     float const radius_rand = ((float)(xorshift64star(idx >> 1) % scal_rad)
