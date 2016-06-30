@@ -14,6 +14,7 @@ const MAX_QUANTITY: usize = 3_000_000;
 const WARP_SIZE: usize = 32;
 const PARTICLES_CL: &'static str = include_str!("kernels/particles.cl");
 
+#[derive(Clone, Copy)]
 pub enum AnimationFunction {
     SineEaseInOut,
     BackEaseInOut,
@@ -50,6 +51,7 @@ struct ClSide {
     positions: Buffer<ClFloat3>,
     velocities: Buffer<ClFloat3>,
     animation: Animation,
+    anim_func: AnimationFunction,
     context: Context,
     proque: ProQue
 }
@@ -88,17 +90,18 @@ fn compute_proque(context: Context, build_option: BuildOpt, quantity: usize) -> 
             .dims([quantity]).build().unwrap()
 }
 
-fn create_cl_side_animation(animation: &'static str,
+fn create_cl_side_animation(anim_func: AnimationFunction,
                             context: Context,
                             gl_side: &GlSide,
                             quantity: usize) -> ClSide {
 
+    let anim_func_name: &'static str = anim_func.into();
     let easing_animation = BuildOpt::CmplrDefine {
         ident: "EASING_ANIMATION".into(),
-        val: animation.into(),
+        val: anim_func_name.into(),
     };
     let proque = compute_proque(context.clone(), easing_animation, quantity);
-    ClSide::new(proque, context, &gl_side, quantity)
+    ClSide::new(proque, context, &gl_side, quantity, anim_func)
 }
 
 impl Into<&'static str> for AnimationFunction {
@@ -114,7 +117,8 @@ impl Into<&'static str> for AnimationFunction {
 }
 
 impl ClSide {
-    pub fn new(proque: ProQue, context: Context, gl_side: &GlSide, quantity: usize) -> ClSide {
+    pub fn new(proque: ProQue, context: Context, gl_side: &GlSide,
+               quantity: usize, anim_func: AnimationFunction) -> ClSide {
         ClSide {
             positions: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
                         [quantity], gl_side.positions.get_id()).unwrap(),
@@ -125,6 +129,7 @@ impl ClSide {
                 to: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
                 duration: Default::default(),
             },
+            anim_func: anim_func,
             context: context,
             proque: proque
         }
@@ -137,7 +142,8 @@ impl Particles {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap()
         };
-        let cl_side = create_cl_side_animation("quad_ease_in_out", context, &gl_side, quantity);
+        let cl_side = create_cl_side_animation(AnimationFunction::QuadEaseInOut,
+                        context, &gl_side, quantity);
         Particles {
             quantity: quantity,
             gl_side: gl_side,
@@ -146,10 +152,15 @@ impl Particles {
     }
 
     pub fn change_animation_function(&mut self, anim_func: AnimationFunction) {
-        self.cl_side = create_cl_side_animation(anim_func.into(),
+        self.cl_side.anim_func = anim_func;
+        self.cl_side = create_cl_side_animation(self.cl_side.anim_func,
                         self.cl_side.context.clone(),
                         &self.gl_side,
                         self.quantity);
+    }
+
+    pub fn animation_function(&self) -> AnimationFunction {
+        self.cl_side.anim_func
     }
 
     pub fn init_rand_sphere_animation(&mut self, duration: Duration) {

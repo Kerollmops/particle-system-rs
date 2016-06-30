@@ -18,7 +18,7 @@ use time::{Duration, PreciseTime};
 use glium::DisplayBuild;
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
-use glium::glutin::VirtualKeyCode::{Escape, Space, C, S, E};
+use glium::glutin::VirtualKeyCode::{Escape, Space, C, S, E, Q};
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
@@ -92,6 +92,9 @@ fn main() {
                 }
                 Event::KeyboardInput(Released, _, Some(E)) => {
                     particles.change_animation_function(AnimationFunction::ElasticEaseOut);
+                }
+                Event::KeyboardInput(Released, _, Some(Q)) => {
+                    particles.change_animation_function(AnimationFunction::QuadEaseInOut);
                 }
                 Event::KeyboardInput(Released, _, Some(Space)) => {
                     update_gravitation = !update_gravitation;
