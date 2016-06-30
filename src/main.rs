@@ -9,13 +9,14 @@ extern crate hertz;
 mod particles;
 mod point;
 mod camera;
+mod animation;
 
 use std::env;
 use time::{Duration, PreciseTime};
 use glium::DisplayBuild;
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
-use glium::glutin::VirtualKeyCode::{Escape, Space};
+use glium::glutin::VirtualKeyCode::{Escape, Space, C, S};
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
@@ -28,15 +29,17 @@ use point::Point;
 const MAX_FPS: usize = 60;
 const WARP_SIZE: usize = 32;
 
-// FIXME delete
-enum AnimationType {
-    RandCube,
-    Cube,
-    RandSphere
-}
-
 fn resize_window(width: u32, height: u32) {
     println!("resize: {:?}x{:?}", width, height);
+}
+
+fn setup_animation(animation: &Animation, particles: &mut Particles) {
+    let anim_duration = animation.animation_duration;
+    match animation.animation_type {
+        AnimationType::Cube => particles.init_cube_animation(anim_duration),
+        AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),
+        AnimationType::RandSphere => particles.init_rand_sphere_animation(anim_duration),
+    }
 }
 
 fn main() {
@@ -71,14 +74,14 @@ fn main() {
     println!("{} particles will be emitted!", quantity);
 
     let program_start = PreciseTime::now();
-    let mut animation_start = PreciseTime::now();
-    let anim_duration = Duration::milliseconds(1000);
-    let mut anim_type = AnimationType::RandCube;
-    match anim_type {
-        AnimationType::Cube => particles.init_cube_animation(anim_duration),
-        AnimationType::RandCube => particles.init_rand_cube_animation(anim_duration),
-        AnimationType::RandSphere => particles.init_rand_sphere_animation(anim_duration),
-    }
+
+    let mut animation = Animation {
+        animation_type: AnimationType::RandCube,
+        animation_duration: Duration::milliseconds(1000),
+        animation_start: PreciseTime::now(),
+        currently_in_animation: true,
+    };
+    setup_animation(&animation, &mut particles);
 
     let camera = Camera::new(&display, width, height);
 
@@ -87,12 +90,22 @@ fn main() {
 
     let mut fps_counter = FPSCounter::new();
     'game: loop {
+        let elaps_time_program = program_start.to(PreciseTime::now());
         let frame_start_time = hertz::current_time_ns();
         for event in display.poll_events() {
-            // println!("event: {:?}", event);
             match event {
                 Event::Closed
                 | Event::KeyboardInput(Released, _, Some(Escape)) => { break 'game; },
+                Event::KeyboardInput(Released, _, Some(C)) => {
+                    animation_start = PreciseTime::now();
+                    in_animation = true;
+                    particles.init_rand_cube_animation(anim_duration);
+                }
+                Event::KeyboardInput(Released, _, Some(S)) => {
+                    animation_start = PreciseTime::now();
+                    in_animation = true;
+                    particles.init_rand_sphere_animation(anim_duration);
+                }
                 Event::KeyboardInput(Released, _, Some(Space)) => {
                     update_particles = !update_particles;
                 },
@@ -100,48 +113,22 @@ fn main() {
             }
         }
 
-        let elaps_time_program = program_start.to(PreciseTime::now());
-
         if update_particles == true {
-            let elaps_time_anim = animation_start.to(PreciseTime::now());
-            // println!("elaps_time_anim: {:?}", elaps_time_anim.num_milliseconds() as f32);
-            // println!("anim_duration: {:?}", anim_duration.num_milliseconds() as f32);
-            if elaps_time_anim <= anim_duration {
-                // println!("update!");
-                particles.update_animation(elaps_time_anim);
+            if in_animation == true {
+                let elaps_time_anim = animation_start.to(PreciseTime::now());
+                if elaps_time_anim <= anim_duration {
+                    particles.update_animation(elaps_time_anim);
+                }
+                else {
+                    particles.update_animation(anim_duration);
+                    in_animation = false;
+                }
             }
             else {
-                anim_type = match anim_type {
-                    AnimationType::Cube => {
-                        animation_start = PreciseTime::now();
-                        particles.init_rand_sphere_animation(anim_duration);
-                        AnimationType::RandSphere
-                    },
-                    AnimationType::RandSphere => {
-                        animation_start = PreciseTime::now();
-                        particles.init_rand_cube_animation(anim_duration);
-                        AnimationType::RandCube
-                        // particles.init_cube_animation(anim_duration);
-                        // AnimationType::Cube
-                    },
-                    AnimationType::RandCube => {
-                        animation_start = PreciseTime::now();
-                        // particles.init_cube_animation(anim_duration);
-                        // AnimationType::Cube
-                        particles.init_rand_sphere_animation(anim_duration);
-                        AnimationType::RandSphere
-                    }
-                };
+                particles.update_gravitation(grav_point, elaps_time_program);
             }
-            // else {
-            //     particles.update_gravitation(grav_point, elaps_time_program);
-            // }
         }
-
         camera.draw(&display, &particles, elaps_time_program);
-
-        // println!("sin(time) = {:?}", (global_timer).sin());
-
         let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
         display.get_window().unwrap().set_title(&title);
         hertz::sleep_for_constant_rate(MAX_FPS, frame_start_time);

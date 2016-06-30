@@ -136,6 +136,10 @@ impl Particles {
     pub fn update_animation(&mut self, time: Duration) {
         self.cl_side.positions.cmd().gl_acquire().enq().unwrap();
 
+        println!("time: {:?}, duration: {:?}",
+                time.num_milliseconds() as f32,
+                self.cl_side.animation.duration);
+
         self.cl_side.proque.create_kernel("update_animation").unwrap()
             .arg_buf(&self.cl_side.animation.from)
             .arg_buf(&self.cl_side.animation.to)
