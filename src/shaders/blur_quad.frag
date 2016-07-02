@@ -68,3 +68,67 @@ void    main() {
         }
     }
 }
+
+// uniform sampler2D color_depth_tex;
+
+// const float blurclamp = 3.0; // max blur amount
+// const float bias = 0.6; // aperture - bigger values for shallower depth of field
+// uniform float focus;    // this value comes from ReadDepth script.
+
+// void main() {
+//     vec2 uv = v_tex_coords.xy;
+//     vec2 aspectcorrect = resolution.x / resolution.y;
+//     float depth = texture2D(color_depth_tex, uv).w;
+//     float factor = (depth - focus);
+//     vec2 dofblur = vec2 (clamp(factor * bias, -blurclamp, blurclamp));
+
+//     f_color = vec4(0.0);
+
+//     f_color += texture2D(color_depth_tex, uv);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.0, 0.4) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.15, 0.37) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.29, 0.29) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.37, 0.15) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.4, 0.0) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.37, -0.15) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.29, -0.29) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.15, -0.37) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.0, -0.4) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.15, 0.37) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.29, 0.29) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.37, 0.15) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.4, 0.0) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.37, -0.15) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.29, -0.29) * aspectcorrect) * dofblur);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.15, -0.37) * aspectcorrect) * dofblur);
+
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.15, 0.37) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.37, 0.15) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.37, -0.15) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.15, -0.37) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.15, 0.37) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.37, 0.15) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.37, -0.15) * aspectcorrect) * dofblur * 0.9);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.15, -0.37) * aspectcorrect) * dofblur * 0.9);
+
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.29, 0.29) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.4, 0.0) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.29, -0.29) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.0, -0.4) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.29, 0.29) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.4, 0.0) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.29, -0.29) * aspectcorrect) * dofblur * 0.7);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.0, 0.4) * aspectcorrect) * dofblur * 0.7);
+
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.29, 0.29) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.4, 0.0) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.29, -0.29) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.0, -0.4) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.29, 0.29) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.4, 0.0) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(-0.29, -0.29) * aspectcorrect) * dofblur * 0.4);
+//     f_color += texture2D(color_depth_tex, uv + (vec2(0.0, 0.4) * aspectcorrect) * dofblur * 0.4);
+
+//     f_color = f_color / 41.0;
+//     f_color.a = 1.0;
+// }
