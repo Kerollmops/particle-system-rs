@@ -86,18 +86,22 @@ fn main() {
                     animation.set_animation(AnimationType::RandCube);
                     animation.init_now(&mut particles);
                 }
-                Event::KeyboardInput(Released, _, Some(R)) => {
-                    particles.reset();
-                }
                 Event::KeyboardInput(Released, _, Some(S)) => {
                     animation.set_animation(AnimationType::RandSphere);
                     animation.init_now(&mut particles);
                 }
+                Event::KeyboardInput(Released, _, Some(R)) => {
+                    particles.reset();
+                }
                 Event::KeyboardInput(Released, _, Some(E)) => {
-                    particles.change_animation_function(AnimationFunction::ElasticEaseOut);
+                    if animation.currently_in_animation() == false {
+                        particles.change_animation_function(AnimationFunction::ElasticEaseOut);
+                    }
                 }
                 Event::KeyboardInput(Released, _, Some(Q)) => {
-                    particles.change_animation_function(AnimationFunction::QuadEaseInOut);
+                    if animation.currently_in_animation() == false {
+                        particles.change_animation_function(AnimationFunction::QuadEaseInOut);
+                    }
                 }
                 Event::KeyboardInput(Released, _, Some(Space)) => {
                     update_gravitation = !update_gravitation;
@@ -106,7 +110,7 @@ fn main() {
             }
         }
 
-        if animation.currently_in_animation() {
+        if animation.currently_in_animation() == true {
             animation.update(&mut particles);
         }
         else if update_gravitation == true {
