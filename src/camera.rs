@@ -8,6 +8,7 @@ use glium::framebuffer::SimpleFrameBuffer;
 use glium::index::{IndicesSource, NoIndices, PrimitiveType};
 use glium::uniforms::Uniforms;
 use glium::backend::Facade;
+use glium::uniforms::{Sampler, MagnifySamplerFilter};
 use time::Duration;
 use nalgebra::{ToHomogeneous, Identity};
 use particles::Particles;
@@ -138,10 +139,13 @@ impl<'a> Camera<'a> {
                 &self.depth_steps.program, &circles_uniforms, &self.depth_steps.draw_parameters).unwrap();
         // }
 
+        let tex = Sampler::new(&self.depth_steps.color_texture).magnify_filter(MagnifySamplerFilter::Nearest);
+
         let blur_quad_uniforms = uniform! {
             matrix: *Matrix4::<f32>::new_identity(4).as_ref(),
             aspect_ratio: self.aspect_ratio(),
-            tex: &self.depth_steps.color_texture,
+            // tex: &self.depth_steps.color_texture,
+            tex: tex,
             resolution: [self.screen.width, self.screen.height],
             time: time.num_milliseconds() as f32
         };

@@ -48,12 +48,23 @@ vec3    generate_bokeh(sampler2D tex, vec2 uv, float radius, float amount) {
     return acc / div;
 }
 
+#define PIXEL_SIZE 4
+
 void    main() {
     vec2 uv = v_tex_coords.xy;
-    float r = 0.8 - 0.8 * cos((time * 0.2 + 0.5) * 6.283);
-    float a = 40.0;
-    uv *= vec2(1.0, -1.0);
+    // float r = 0.8 - 0.8 * cos((time * 0.2 + 0.5) * 6.283);
+    // float a = 40.0;
+    // uv *= vec2(1.0, -1.0);
 
     // f_color = vec4(generate_bokeh(tex, uv, r, a), 1.0);
-    f_color = texture(tex, v_tex_coords);
+    // f_color = texture(tex, uv);
+
+    vec2 start = floor(uv * resolution / PIXEL_SIZE) * PIXEL_SIZE / resolution;
+    f_color = vec4(0);
+    for (int x = 0; x < PIXEL_SIZE; x++) {
+        for (int y = 0; y < PIXEL_SIZE; y++) {
+            vec2 pos = start + (vec2(x, y) / resolution);
+            f_color += texture(tex, pos) / (PIXEL_SIZE * PIXEL_SIZE);
+        }
+    }
 }

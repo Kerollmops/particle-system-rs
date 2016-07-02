@@ -35,6 +35,10 @@ fn resize_window(width: u32, height: u32) {
     println!("resize: {:?}x{:?}", width, height);
 }
 
+fn contains((width, height): (i32, i32), (x, y): (i32, i32)) -> bool {
+    x >= 0 && x < width && y >= 0 && y < height
+}
+
 fn main() {
     let quantity = retrieve_quantity(env::args().nth(1));
     let quantity = match correct_quantity(quantity) {
@@ -70,7 +74,7 @@ fn main() {
     animation.init_now(&mut particles);
     let camera = Camera::new(&display, width, height);
 
-    let grav_point = Point::new(0.0, 0.0, 0.0);
+    let mut grav_point = Point::new(0.0, 0.0, 0.0);
     let mut update_gravitation = true;
 
     let mut fps_counter = FPSCounter::new();
@@ -82,6 +86,12 @@ fn main() {
             match event {
                 Event::Closed
                 | Event::KeyboardInput(Released, _, Some(Escape)) => { break 'game; },
+                Event::MouseMoved(x, y) => {
+                    if contains((width as i32, height as i32), (x, y)) {
+                        // grav_point = Point::new(x as f32, y as f32, 0.0);
+                    }
+                    // println!("mouse moved {}:{} [{}]", x, y, is_in);
+                }
                 Event::KeyboardInput(Released, _, Some(C)) => {
                     animation.set_animation(AnimationType::RandCube);
                     animation.init_now(&mut particles);
@@ -92,6 +102,10 @@ fn main() {
                 }
                 Event::KeyboardInput(Released, _, Some(R)) => {
                     particles.reset();
+                    animation.set_animation(AnimationType::RandCube);
+                    animation.init_now(&mut particles);
+                    particles.update_animation(animation.duration());
+                    update_gravitation = false;
                 }
                 Event::KeyboardInput(Released, _, Some(E)) => {
                     if animation.currently_in_animation() == false {
