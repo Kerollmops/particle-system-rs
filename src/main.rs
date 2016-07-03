@@ -22,7 +22,7 @@ use time::{Duration, PreciseTime};
 use glium_graphics::{GliumWindow, OpenGL, GlyphCache, Texture, Glium2d};
 use piston::window::{Window, WindowSettings, AdvancedWindow};
 use piston::event_loop::EventLoop;
-use conrod::{Labelable, Positionable, Sizeable, Theme, Widget};
+use conrod::{Labelable, Positionable, Sizeable, Theme, Widget, Colorable};
 use piston::input::*;
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
@@ -96,52 +96,21 @@ fn main() {
     let camera = Camera::new(&display, display.draw_size());
 
     let mut grav_point = Point::new(0.0, 0.0, 0.0);
-    let mut update_gravitation = true;
+    let mut update_gravitation = false;
 
     let mut fps_counter = FPSCounter::new();
     let elaps_time_program = program_start.to(PreciseTime::now());
-
-    let font_path = Path::new("assets/fonts/NotoSans/NotoSans-Regular.ttf");
-    let mut glyph_cache = GlyphCache::new(&font_path, display.clone()).unwrap();
 
     display.set_ups(MAX_FPS);
     display.set_max_fps(MAX_FPS);
     let mut g2d = Glium2d::new(opengl, &display);
     'game_loop: while let Some(event) = display.next() {
+        ui.handle_event(event.clone());
         match event {
             Event::Render(args) => {
-                println!("{:?}", args.viewport().rect);
-                ui.handle_event(event.clone());
-                // event.update(|_| ui.set_widgets(|ref mut ui| {
-                //     // Generate the ID for the Button COUNTER.
-                //     widget_ids!(CANVAS, COUNTER);
-
-                //     // Create a background canvas upon which we'll place the button.
-                //     conrod::Canvas::new().pad(40.0).set(CANVAS, ui);
-
-                //     // Draw the button and increment `count` if pressed.
-                //     conrod::Button::new()
-                //         .middle_of(CANVAS)
-                //         .w_h(80.0, 80.0)
-                //         .label(&count.to_string())
-                //         .react(|| count += 1)
-                //         .set(COUNTER, ui);
-                // }));
                 let mut frame = display.draw();
                 camera.draw(&mut frame, &display, &particles, elaps_time_program);
-                // g2d.draw(&mut frame, args.viewport(), |c, g| ui.draw_if_changed(c, g));
-                g2d.draw(&mut frame, args.viewport(), |c, g| {
-                    use graphics::*;
-
-                    // clear([1.0; 4], g);
-                    text::Text::new_color([0.0, 0.5, 0.0, 1.0], 32).draw(
-                        "Hello glium_graphics!",
-                        &mut glyph_cache,
-                        &DrawState::default(),
-                        c.transform.trans(10.0, 100.0),
-                        g
-                    );
-                });
+                g2d.draw(&mut frame, args.viewport(), |c, g| ui.draw(c, g));
                 frame.finish().unwrap();
             }
             Event::Input(Input::Release(Button::Keyboard(Key::Escape))) => {
@@ -176,6 +145,25 @@ fn main() {
                 update_gravitation = !update_gravitation;
             }
             Event::Update(_) => {
+                ui.set_widgets(|ref mut ui| {
+                    // Generate the ID for the Button COUNTER.
+                    widget_ids!(CANVAS, COUNTER);
+
+                    // Create a background canvas upon which we'll place the button.
+                    // conrod::Canvas::new()
+                    //     .pad(40.0)
+                    //     .color(conrod::color::TRANSPARENT)
+                    //     .set(CANVAS, ui);
+
+                    // Draw the button and increment `count` if pressed.
+                    conrod::Button::new()
+                        // .middle_of(CANVAS)
+                        .top_left()
+                        .w_h(80.0, 80.0)
+                        .label(&count.to_string())
+                        .react(|| count += 1)
+                        .set(COUNTER, ui);
+                });
                 if animation.currently_in_animation() == true {
                     animation.update(&mut particles);
                 }
