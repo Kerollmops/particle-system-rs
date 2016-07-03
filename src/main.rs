@@ -1,11 +1,13 @@
 #[macro_use] extern crate glium;
+extern crate glium_graphics;
+extern crate piston;
+#[macro_use] extern crate conrod;
 extern crate nalgebra;
 extern crate time;
 extern crate ocl;
 extern crate cgl;
 #[macro_use] extern crate colorify;
 extern crate fps_counter;
-extern crate hertz;
 extern crate rustyline;
 
 mod particles;
@@ -14,11 +16,13 @@ mod camera;
 mod animation;
 
 use std::env;
+use std::path::Path;
 use time::{Duration, PreciseTime};
-use glium::DisplayBuild;
-use glium::glutin::Event;
-use glium::glutin::ElementState::Released;
-use glium::glutin::VirtualKeyCode::{Escape, Space, C, S, E, Q, R};
+use glium_graphics::{GliumWindow, OpenGL, GlyphCache, Texture, Glium2d};
+use piston::window::{Window, WindowSettings, AdvancedWindow};
+use piston::event_loop::EventLoop;
+use conrod::{Labelable, Positionable, Sizeable, Theme, Widget};
+use piston::input::*;
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
@@ -29,7 +33,11 @@ use camera::Camera;
 use point::Point;
 use animation::{AnimationType, Animation};
 
-const MAX_FPS: usize = 60;
+const MAX_FPS: u64 = 60;
+
+// Conrod is backend agnostic. Here, we define the `piston_window` backend to use for our `Ui`.
+type Backend = (Texture, GlyphCache<GliumWindow>);
+type Ui = conrod::Ui<Backend>;
 
 fn resize_window(width: u32, height: u32) {
     println!("resize: {:?}x{:?}", width, height);
@@ -46,12 +54,24 @@ fn main() {
         Ok(x) => x
     };
 
-    let (width, height) = (1024.0, 768.0);
-    let display = glium::glutin::WindowBuilder::new()
-                    .with_dimensions(width as u32, height as u32)
-                    .with_title(format!("Particle system in Rust ({} fps)", 30))
-                    .with_vsync()
-                    .build_glium().unwrap();
+    let opengl = OpenGL::V3_2;
+    let (width, height) = (1024, 768);
+    let title = format!("Particle system in Rust ({} fps)", 30);
+    let mut display: GliumWindow = WindowSettings::new(title, [width, height])
+                                    .vsync(true)
+                                    .opengl(opengl)
+                                    .resizable(false) // make it true !!!
+                                    .controllers(true) // game controllers ?
+                                    .build().unwrap();
+
+    let mut ui = {
+        let font_path = Path::new("assets/fonts/NotoSans/NotoSans-Regular.ttf");
+        let theme = Theme::default();
+        let glyph_cache = GlyphCache::new(&font_path, display.clone()).unwrap();
+        Ui::new(glyph_cache, theme)
+    };
+
+    let mut count = 0;
 
     let device_type = DeviceType::from_bits_truncate(cl_h::CL_DEVICE_TYPE_GPU);
     let devices = Device::list(&Platform::default(), Some(device_type));
@@ -72,68 +92,83 @@ fn main() {
     let program_start = PreciseTime::now();
     let mut animation = Animation::new(Duration::milliseconds(1000));
     animation.init_now(&mut particles);
-    let camera = Camera::new(&display, width, height);
+    let camera = Camera::new(&display, display.draw_size());
 
     let mut grav_point = Point::new(0.0, 0.0, 0.0);
     let mut update_gravitation = true;
 
     let mut fps_counter = FPSCounter::new();
-    'game: loop {
-        let elaps_time_program = program_start.to(PreciseTime::now());
-        let frame_start_time = hertz::current_time_ns();
+    let elaps_time_program = program_start.to(PreciseTime::now());
 
-        for event in display.poll_events() {
-            match event {
-                Event::Closed
-                | Event::KeyboardInput(Released, _, Some(Escape)) => { break 'game; },
-                Event::MouseMoved(x, y) => {
-                    if contains((width as i32, height as i32), (x, y)) {
-                        // grav_point = Point::new(x as f32, y as f32, 0.0);
-                    }
-                    // println!("mouse moved {}:{} [{}]", x, y, is_in);
-                }
-                Event::KeyboardInput(Released, _, Some(C)) => {
-                    animation.set_animation(AnimationType::RandCube);
-                    animation.init_now(&mut particles);
-                }
-                Event::KeyboardInput(Released, _, Some(S)) => {
-                    animation.set_animation(AnimationType::RandSphere);
-                    animation.init_now(&mut particles);
-                }
-                Event::KeyboardInput(Released, _, Some(R)) => {
-                    particles.reset();
-                    animation.set_animation(AnimationType::RandCube);
-                    animation.init_now(&mut particles);
-                    particles.update_animation(animation.duration());
-                    update_gravitation = false;
-                }
-                Event::KeyboardInput(Released, _, Some(E)) => {
-                    if animation.currently_in_animation() == false {
-                        particles.change_animation_function(AnimationFunction::ElasticEaseOut);
-                    }
-                }
-                Event::KeyboardInput(Released, _, Some(Q)) => {
-                    if animation.currently_in_animation() == false {
-                        particles.change_animation_function(AnimationFunction::QuadEaseInOut);
-                    }
-                }
-                Event::KeyboardInput(Released, _, Some(Space)) => {
-                    update_gravitation = !update_gravitation;
-                },
-                _ => ()
+    display.set_ups(MAX_FPS);
+    display.set_max_fps(MAX_FPS);
+    let mut g2d = Glium2d::new(opengl, &display);
+    'game_loop: while let Some(event) = display.next() {
+        match event {
+            Event::Render(args) => {
+                ui.handle_event(event.clone());
+                event.update(|_| ui.set_widgets(|ref mut ui| {
+                    // Generate the ID for the Button COUNTER.
+                    widget_ids!(CANVAS, COUNTER);
+
+                    // Create a background canvas upon which we'll place the button.
+                    conrod::Canvas::new().pad(40.0).set(CANVAS, ui);
+
+                    // Draw the button and increment `count` if pressed.
+                    conrod::Button::new()
+                        .middle_of(CANVAS)
+                        .w_h(80.0, 80.0)
+                        .label(&count.to_string())
+                        .react(|| count += 1)
+                        .set(COUNTER, ui);
+                }));
+                let mut frame = display.draw();
+                camera.draw(&mut frame, &display, &particles, elaps_time_program);
+                g2d.draw(&mut frame, args.viewport(), |c, g| ui.draw_if_changed(c, g));
+                frame.finish().unwrap();
             }
+            Event::Input(Input::Release(Button::Keyboard(Key::Escape))) => {
+                break 'game_loop;
+            }
+            Event::Input(Input::Release(Button::Keyboard(Key::C))) => {
+                animation.set_animation(AnimationType::RandCube);
+                animation.init_now(&mut particles);
+            }
+            Event::Input(Input::Release(Button::Keyboard(Key::S))) => {
+                animation.set_animation(AnimationType::RandSphere);
+                animation.init_now(&mut particles);
+            }
+            Event::Input(Input::Release(Button::Keyboard(Key::R))) => {
+                particles.reset();
+                animation.set_animation(AnimationType::RandCube);
+                animation.init_now(&mut particles);
+                particles.update_animation(animation.duration());
+                update_gravitation = false;
+            }
+            Event::Input(Input::Release(Button::Keyboard(Key::Q))) => {
+                if animation.currently_in_animation() == false {
+                    particles.change_animation_function(AnimationFunction::QuadEaseInOut);
+                }
+            }
+            Event::Input(Input::Release(Button::Keyboard(Key::E))) => {
+                if animation.currently_in_animation() == false {
+                    particles.change_animation_function(AnimationFunction::ElasticEaseOut);
+                }
+            }
+            Event::Input(Input::Release(Button::Keyboard(Key::Space))) => {
+                update_gravitation = !update_gravitation;
+            }
+            Event::Update(_) => {
+                if animation.currently_in_animation() == true {
+                    animation.update(&mut particles);
+                }
+                else if update_gravitation == true {
+                    particles.update_gravitation(grav_point, elaps_time_program);
+                }
+                let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
+                display.set_title(title);
+            },
+            _ => ()
         }
-
-        if animation.currently_in_animation() == true {
-            animation.update(&mut particles);
-        }
-        else if update_gravitation == true {
-            particles.update_gravitation(grav_point, elaps_time_program);
-        }
-
-        camera.draw(&display, &particles, elaps_time_program);
-        let title = format!("Particle system in Rust ({} fps)", fps_counter.tick());
-        display.get_window().unwrap().set_title(&title);
-        hertz::sleep_for_constant_rate(MAX_FPS, frame_start_time);
     }
 }

@@ -57,16 +57,16 @@ void    main() {
     // uv *= vec2(1.0, -1.0);
 
     // f_color = vec4(generate_bokeh(tex, uv, r, a), 1.0);
-    // f_color = texture(tex, uv);
+    f_color = texture(tex, uv);
 
-    vec2 start = floor(uv * resolution / PIXEL_SIZE) * PIXEL_SIZE / resolution;
-    f_color = vec4(0);
-    for (int x = 0; x < PIXEL_SIZE; x++) {
-        for (int y = 0; y < PIXEL_SIZE; y++) {
-            vec2 pos = start + (vec2(x, y) / resolution);
-            f_color += texture(tex, pos) / (PIXEL_SIZE * PIXEL_SIZE);
-        }
-    }
+    // vec2 start = floor(uv * resolution / PIXEL_SIZE) * PIXEL_SIZE / resolution;
+    // f_color = vec4(0);
+    // for (int x = 0; x < PIXEL_SIZE; x++) {
+    //     for (int y = 0; y < PIXEL_SIZE; y++) {
+    //         vec2 pos = start + (vec2(x, y) / resolution);
+    //         f_color += texture(tex, pos) / (PIXEL_SIZE * PIXEL_SIZE);
+    //     }
+    // }
 }
 
 // uniform sampler2D color_depth_tex;
