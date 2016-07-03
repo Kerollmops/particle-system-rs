@@ -11,6 +11,7 @@ dependencies = [
  "ocl 0.10.0 (git+https://github.com/Kerosene2000/ocl.git?rev=6a0f77f)",
  "piston 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "piston2d-glium_graphics 0.26.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "piston2d-graphics 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustyline 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

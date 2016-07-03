@@ -6,6 +6,7 @@ authors = ["Clément Renault <renault.cle@gmail.com>"]
 [dependencies]
 glium = "0.14"
 piston2d-glium_graphics = "0.26"
+piston2d-graphics = "0.16"
 piston = "0.23"
 conrod = "0.36"
 nalgebra = "0.8"
