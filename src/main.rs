@@ -101,6 +101,8 @@ fn main() {
     let mut fps_counter = FPSCounter::new();
     let elaps_time_program = program_start.to(PreciseTime::now());
 
+    let mut animations = vec!["abc".into(), "def".into(), "ghi".into()];
+
     display.set_ups(MAX_FPS);
     display.set_max_fps(MAX_FPS);
     let mut g2d = Glium2d::new(opengl, &display);
@@ -147,7 +149,7 @@ fn main() {
             Event::Update(_) => {
                 ui.set_widgets(|ref mut ui| {
                     // Generate the ID for the Button COUNTER.
-                    widget_ids!(CANVAS, COUNTER);
+                    widget_ids!(CANVAS, COUNTER, DROPDOWN);
 
                     // Create a background canvas upon which we'll place the button.
                     // conrod::Canvas::new()
@@ -159,10 +161,19 @@ fn main() {
                     conrod::Button::new()
                         // .middle_of(CANVAS)
                         .top_left()
-                        .w_h(80.0, 80.0)
-                        .label(&count.to_string())
-                        .react(|| count += 1)
+                        .w_h(80.0, 35.0)
+                        .label("play/pause") // FIXME change this text
+                        .small_font(&ui)
+                        .react(|| update_gravitation = !update_gravitation)
                         .set(COUNTER, ui);
+
+                    conrod::DropDownList::new(&mut animations, &mut Some(0))
+                        .down_from(COUNTER, 10.0)
+                        .react(|selected_idx: &mut Option<usize>, new_idx, string: &str| {
+                            *selected_idx = Some(new_idx) // FIXME make this persistent
+                        })
+                        .small_font(&ui)
+                        .set(DROPDOWN, ui);
                 });
                 if animation.currently_in_animation() == true {
                     animation.update(&mut particles);
