@@ -10,7 +10,7 @@ dependencies = [
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ocl 0.10.0 (git+https://github.com/Kerosene2000/ocl.git?rev=6a0f77f)",
  "piston 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "piston2d-glium_graphics 0.26.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "piston2d-glium_graphics 0.26.0 (git+https://github.com/PistonDevelopers/glium_graphics.git?rev=031636f)",
  "piston2d-graphics 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustyline 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -644,7 +644,7 @@ dependencies = [
 [[package]]
 name = "piston2d-glium_graphics"
 version = "0.26.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/PistonDevelopers/glium_graphics.git?rev=031636f#031636f06acda1c72e225b42fdd60344f532746e"
 dependencies = [
  "freetype-rs 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
