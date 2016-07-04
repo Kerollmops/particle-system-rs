@@ -72,8 +72,6 @@ fn main() {
         Ui::new(glyph_cache, theme)
     };
 
-    let mut count = 0;
-
     let device_type = DeviceType::from_bits_truncate(cl_h::CL_DEVICE_TYPE_GPU);
     let devices = Device::list(&Platform::default(), Some(device_type));
     let device = devices.first().expect("No device with specified types found.");
@@ -101,7 +99,14 @@ fn main() {
     let mut fps_counter = FPSCounter::new();
     let elaps_time_program = program_start.to(PreciseTime::now());
 
-    let mut animations = vec!["abc".into(), "def".into(), "ghi".into()];
+    let mut animations = vec![
+        "abc".into(),
+        "def".into(),
+        "ghi".into(),
+        "jkl".into(),
+        "mno".into(),
+        "pqr".into()
+    ];
 
     display.set_ups(MAX_FPS);
     display.set_max_fps(MAX_FPS);
@@ -148,8 +153,7 @@ fn main() {
             }
             Event::Update(_) => {
                 ui.set_widgets(|ref mut ui| {
-                    // Generate the ID for the Button COUNTER.
-                    widget_ids!(CANVAS, COUNTER, DROPDOWN);
+                    widget_ids!(CANVAS, COUNTER, DROPDOWN, SLIDER);
 
                     // Create a background canvas upon which we'll place the button.
                     // conrod::Canvas::new()
@@ -158,22 +162,29 @@ fn main() {
                     //     .set(CANVAS, ui);
 
                     // Draw the button and increment `count` if pressed.
-                    conrod::Button::new()
+                    conrod::Toggle::new(update_gravitation)
                         // .middle_of(CANVAS)
                         .top_left()
                         .w_h(80.0, 35.0)
+                        .color(conrod::color::RED)
                         .label("play/pause") // FIXME change this text
                         .small_font(&ui)
-                        .react(|| update_gravitation = !update_gravitation)
+                        .react(|value| update_gravitation = value)
                         .set(COUNTER, ui);
 
                     conrod::DropDownList::new(&mut animations, &mut Some(0))
                         .down_from(COUNTER, 10.0)
+                        .max_visible_items(3)
                         .react(|selected_idx: &mut Option<usize>, new_idx, string: &str| {
                             *selected_idx = Some(new_idx) // FIXME make this persistent
                         })
                         .small_font(&ui)
                         .set(DROPDOWN, ui);
+
+                    conrod::Slider::new(0.5, 0.0, 1.0)
+                        .down_from(DROPDOWN, 10.0)
+                        .react(|value| println!("value: {:?}", value))
+                        .set(SLIDER, ui);
                 });
                 if animation.currently_in_animation() == true {
                     animation.update(&mut particles);
