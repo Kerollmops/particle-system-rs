@@ -38,8 +38,8 @@ use animation::{AnimationType, Animation};
 const MAX_FPS: u64 = 60;
 
 // Conrod is backend agnostic. Here, we define the `piston_window` backend to use for our `Ui`.
-type Backend = (Texture, GlyphCache<GliumWindow>);
-type Ui = conrod::Ui<Backend>;
+// type Backend = (Texture, GlyphCache<GliumWindow>);
+// type Ui = conrod::Ui<Backend>;
 
 fn resize_window(width: u32, height: u32) {
     println!("resize: {:?}x{:?}", width, height);
@@ -74,11 +74,19 @@ fn main() {
                                     .controllers(true) // game controllers ?
                                     .build().unwrap();
 
+    // let mut ui = {
+    //     let font_path = Path::new("assets/fonts/NotoSans/NotoSans-Regular.ttf");
+    //     let glyph_cache = GlyphCache::new(&font_path, display.clone()).unwrap();
+    //     let theme = Theme::default();
+    //     Ui::new(glyph_cache, theme)
+    // };
+
+    // https://github.com/PistonDevelopers/conrod/blob/master/examples/glutin_glium.rs
     let mut ui = {
+        let mut ui = conrod::UiBuilder::new().build();
         let font_path = Path::new("assets/fonts/NotoSans/NotoSans-Regular.ttf");
-        let glyph_cache = GlyphCache::new(&font_path, display.clone()).unwrap();
-        let theme = Theme::default();
-        Ui::new(glyph_cache, theme)
+        ui.fonts.insert_from_file(font_path).unwrap();
+        ui
     };
 
     let device_type = DeviceType::from_bits_truncate(cl_h::CL_DEVICE_TYPE_GPU);
@@ -155,35 +163,28 @@ fn main() {
             }
             Event::Update(_) => {
                 ui.set_widgets(|ref mut ui| {
-                    widget_ids!(CANVAS, COUNTER, BUTTON, DROPDOWN, SLIDER);
-
-                    // Create a background canvas upon which we'll place the button.
-                    // conrod::Canvas::new()
-                    //     .pad(40.0)
-                    //     .color(conrod::color::TRANSPARENT)
-                    //     .set(CANVAS, ui);
+                    widget_ids!(PLAY_PAUSE, RESET, ANIMATION, SLIDER);
 
                     // Draw the button and increment `count` if pressed.
                     conrod::Toggle::new(update_gravitation)
-                        // .middle_of(CANVAS)
                         .top_left_with_margin(5.0)
                         .w_h(80.0, 35.0)
                         .color(conrod::color::RED)
                         .label("play/pause") // FIXME change this text
                         .small_font(&ui)
                         .react(|value| update_gravitation = value)
-                        .set(COUNTER, ui);
+                        .set(PLAY_PAUSE, ui);
 
                     conrod::Button::new()
-                        .right_from(COUNTER, 10.0)
+                        .right_from(PLAY_PAUSE, 10.0)
                         .color(conrod::color::BLUE)
                         .label("reset")
                         .small_font(&ui)
                         .react(|| reset_particles(&mut particles, &mut animation, &mut update_gravitation))
-                        .set(BUTTON, ui);
+                        .set(RESET, ui);
 
                     conrod::DropDownList::new(&mut animations_string, &mut selected_animation)
-                        .down_from(COUNTER, 10.0)
+                        .down_from(PLAY_PAUSE, 10.0)
                         .w_h(170.0, 35.0)
                         .max_visible_items(6)
                         .react(|selected_idx: &mut Option<usize>, new_idx, _: &str| {
@@ -193,10 +194,10 @@ fn main() {
                             }
                         })
                         .small_font(&ui)
-                        .set(DROPDOWN, ui);
+                        .set(ANIMATION, ui);
 
                     conrod::Slider::new(slider_value, 0.0, 1.0)
-                        .down_from(DROPDOWN, 10.0)
+                        .down_from(ANIMATION, 10.0)
                         .react(|value| slider_value = value)
                         .set(SLIDER, ui);
                 });

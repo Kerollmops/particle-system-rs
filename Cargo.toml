@@ -8,7 +8,7 @@ glium = "0.14"
 piston2d-glium_graphics = { git = "https://github.com/PistonDevelopers/glium_graphics.git", rev = "031636f" }
 piston2d-graphics = "0.16"
 piston = "0.23"
-conrod = "0.36"
+conrod = "0.39"
 nalgebra = "0.8"
 cgl = "0.1"
 ocl = { git = "https://github.com/Kerosene2000/ocl.git", rev = "6a0f77f" }
