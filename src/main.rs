@@ -49,6 +49,14 @@ fn contains((width, height): (i32, i32), (x, y): (i32, i32)) -> bool {
     x >= 0 && x < width && y >= 0 && y < height
 }
 
+fn reset_particles(particles: &mut Particles, animation: &mut Animation, update_gravitation: &mut bool) {
+    particles.reset();
+    animation.set_animation(AnimationType::RandCube);
+    animation.init_now(particles);
+    particles.update_animation(animation.duration());
+    *update_gravitation = false;
+}
+
 fn main() {
     let quantity = retrieve_quantity(env::args().nth(1));
     let quantity = match correct_quantity(quantity) {
@@ -104,6 +112,8 @@ fn main() {
     let animations = AnimationFunction::all_variants();
     let mut animations_string: Vec<_> = animations.iter().map(|x| String::from_str((*x).into()).unwrap()).collect();
 
+    let mut slider_value = 0.5;
+
     display.set_ups(MAX_FPS);
     display.set_max_fps(MAX_FPS);
     let mut g2d = Glium2d::new(opengl, &display);
@@ -128,11 +138,7 @@ fn main() {
                 animation.init_now(&mut particles);
             }
             Event::Input(Input::Release(Button::Keyboard(Key::R))) => {
-                particles.reset();
-                animation.set_animation(AnimationType::RandCube);
-                animation.init_now(&mut particles);
-                particles.update_animation(animation.duration());
-                update_gravitation = false;
+                reset_particles(&mut particles, &mut animation, &mut update_gravitation);
             }
             Event::Input(Input::Release(Button::Keyboard(Key::Q))) => {
                 if animation.currently_in_animation() == false {
@@ -149,7 +155,7 @@ fn main() {
             }
             Event::Update(_) => {
                 ui.set_widgets(|ref mut ui| {
-                    widget_ids!(CANVAS, COUNTER, DROPDOWN, SLIDER);
+                    widget_ids!(CANVAS, COUNTER, BUTTON, DROPDOWN, SLIDER);
 
                     // Create a background canvas upon which we'll place the button.
                     // conrod::Canvas::new()
@@ -168,20 +174,30 @@ fn main() {
                         .react(|value| update_gravitation = value)
                         .set(COUNTER, ui);
 
+                    conrod::Button::new()
+                        .right_from(COUNTER, 10.0)
+                        .color(conrod::color::BLUE)
+                        .label("reset")
+                        .small_font(&ui)
+                        .react(|| reset_particles(&mut particles, &mut animation, &mut update_gravitation))
+                        .set(BUTTON, ui);
+
                     conrod::DropDownList::new(&mut animations_string, &mut selected_animation)
                         .down_from(COUNTER, 10.0)
-                        .w_h(130.0, 35.0)
+                        .w_h(170.0, 35.0)
                         .max_visible_items(6)
                         .react(|selected_idx: &mut Option<usize>, new_idx, _: &str| {
                             *selected_idx = Some(new_idx);
-                            particles.change_animation_function(*animations.get(new_idx).unwrap());
+                            if animation.currently_in_animation() == false {
+                                particles.change_animation_function(*animations.get(new_idx).unwrap());
+                            }
                         })
                         .small_font(&ui)
                         .set(DROPDOWN, ui);
 
-                    conrod::Slider::new(0.5, 0.0, 1.0)
+                    conrod::Slider::new(slider_value, 0.0, 1.0)
                         .down_from(DROPDOWN, 10.0)
-                        .react(|value| println!("value: {:?}", value))
+                        .react(|value| slider_value = value)
                         .set(SLIDER, ui);
                 });
                 if animation.currently_in_animation() == true {
