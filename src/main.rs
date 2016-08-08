@@ -18,6 +18,7 @@ mod animation;
 
 use std::env;
 use std::path::Path;
+use std::str::FromStr;
 use time::{Duration, PreciseTime};
 use glium_graphics::{GliumWindow, OpenGL, GlyphCache, Texture, Glium2d};
 use piston::window::{Window, WindowSettings, AdvancedWindow};
@@ -99,19 +100,14 @@ fn main() {
     let mut fps_counter = FPSCounter::new();
     let elaps_time_program = program_start.to(PreciseTime::now());
 
-    let mut animations = vec![
-        "abc".into(),
-        "def".into(),
-        "ghi".into(),
-        "jkl".into(),
-        "mno".into(),
-        "pqr".into()
-    ];
+    let mut selected_animation = Some(0);
+    let animations = AnimationFunction::all_variants();
+    let mut animations_string: Vec<_> = animations.iter().map(|x| String::from_str((*x).into()).unwrap()).collect();
 
     display.set_ups(MAX_FPS);
     display.set_max_fps(MAX_FPS);
     let mut g2d = Glium2d::new(opengl, &display);
-    'game_loop: while let Some(event) = display.next() {
+    'game: while let Some(event) = display.next() {
         ui.handle_event(event.clone());
         match event {
             Event::Render(args) => {
@@ -121,7 +117,7 @@ fn main() {
                 frame.finish().unwrap();
             }
             Event::Input(Input::Release(Button::Keyboard(Key::Escape))) => {
-                break 'game_loop;
+                break 'game;
             }
             Event::Input(Input::Release(Button::Keyboard(Key::C))) => {
                 animation.set_animation(AnimationType::RandCube);
@@ -164,7 +160,7 @@ fn main() {
                     // Draw the button and increment `count` if pressed.
                     conrod::Toggle::new(update_gravitation)
                         // .middle_of(CANVAS)
-                        .top_left()
+                        .top_left_with_margin(5.0)
                         .w_h(80.0, 35.0)
                         .color(conrod::color::RED)
                         .label("play/pause") // FIXME change this text
@@ -172,11 +168,13 @@ fn main() {
                         .react(|value| update_gravitation = value)
                         .set(COUNTER, ui);
 
-                    conrod::DropDownList::new(&mut animations, &mut Some(0))
+                    conrod::DropDownList::new(&mut animations_string, &mut selected_animation)
                         .down_from(COUNTER, 10.0)
-                        .max_visible_items(3)
-                        .react(|selected_idx: &mut Option<usize>, new_idx, string: &str| {
-                            *selected_idx = Some(new_idx) // FIXME make this persistent
+                        .w_h(130.0, 35.0)
+                        .max_visible_items(6)
+                        .react(|selected_idx: &mut Option<usize>, new_idx, _: &str| {
+                            *selected_idx = Some(new_idx);
+                            particles.change_animation_function(*animations.get(new_idx).unwrap());
                         })
                         .small_font(&ui)
                         .set(DROPDOWN, ui);

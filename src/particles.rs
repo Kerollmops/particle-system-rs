@@ -24,6 +24,13 @@ pub enum AnimationFunction {
     ElasticEaseOut,
 }
 
+impl AnimationFunction {
+    pub fn all_variants() -> Vec<AnimationFunction> {
+        use self::AnimationFunction::*;
+        vec![SineEaseInOut, BackEaseInOut, QuadEaseInOut, BackEaseOut, ElasticEaseOut]
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct Position {
     position: [f32; 4]
