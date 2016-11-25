@@ -1,22 +1,32 @@
-#[macro_use] extern crate glium;
+#[macro_use] extern crate gfx;
+extern crate glutin;
+extern crate gfx_window_glutin;
 extern crate nalgebra;
 extern crate ocl;
 extern crate cgl;
 #[macro_use] extern crate colorify;
 extern crate fps_counter;
 extern crate hertz;
+
 mod particles;
 mod point;
 mod camera;
 
+// use glium::{DisplayBuild, Surface};
+// use glium::glutin::Event;
+// use glium::glutin::ElementState::Released;
+// use glium::glutin::VirtualKeyCode::Escape;
+// use glium::index::{NoIndices, PrimitiveType};
+// use glium::backend::Facade;
+// use glium::Frame;
+
+use glutin::ElementState::*;
+use glutin::VirtualKeyCode::*;
+use gfx::format::{Rgba8, DepthStencil};
+use gfx::traits::FactoryExt;
+use gfx::Device;
+
 use std::env;
-use glium::{DisplayBuild, Surface};
-use glium::glutin::Event;
-use glium::glutin::ElementState::Released;
-use glium::glutin::VirtualKeyCode::Escape;
-use glium::index::{NoIndices, PrimitiveType};
-use glium::backend::Facade;
-use glium::Frame;
 use ocl::{Device, Platform, Context, cl_h};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
@@ -31,6 +41,26 @@ const BACKGROUND: (f32, f32, f32, f32) = (0.17578, 0.17578, 0.17578, 1.0);
 // const BACKGROUND: (f32, f32, f32, f32) = (0.0, 0.0, 0.0, 1.0);
 const MAX_FPS: usize = 60;
 
+gfx_defines!{
+    vertex Vertex {
+        pos: [f32; 3] = "v_Position",
+    }
+
+    constant Locals {
+       world: [[f32; 4]; 4] = "u_World",
+       model: [[f32; 4]; 4] = "u_Model",
+       view: [[f32; 4]; 4] = "u_View",
+    }
+
+    pipeline pipe {
+        vbuf: gfx::VertexBuffer<Vertex> = (),
+        locals: gfx::ConstantBuffer<Locals> = "Locals",
+        out_color: gfx::RenderTarget<ColorFormat> = "Color",
+        out_depth: gfx::DepthTarget<DepthFormat> =
+            gfx::preset::depth::LESS_EQUAL_WRITE,
+    }
+}
+
 // FIXME delete
 enum AnimationType {
     RandCube,
@@ -38,19 +68,48 @@ enum AnimationType {
     RandSphere
 }
 
-fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
-    let indices = NoIndices(PrimitiveType::Points);
-    let uniforms = uniform!{ matrix: *camera.matrix().as_ref() };
-    frame.draw(particles.positions(), &indices, particles.program(),
-        &uniforms, &Default::default()).unwrap();
-    frame.set_finish().unwrap();
-}
+// fn draw(frame: &mut Frame, camera: &Camera, particles: &Particles) {
+//     let indices = NoIndices(PrimitiveType::Points);
+//     let uniforms = uniform!{ matrix: *camera.matrix().as_ref() };
+//     frame.draw(particles.positions(), &indices, particles.program(),
+//         &uniforms, &Default::default()).unwrap();
+//     frame.set_finish().unwrap();
+// }
 
 fn main() {
-    let display = glium::glutin::WindowBuilder::new()
-                    .with_dimensions(1024, 768)
-                    .with_title(format!("Particle system in Rust ({} fps)", 30))
-                    .build_glium().unwrap();
+    // let display = glium::glutin::WindowBuilder::new()
+    //                 .with_dimensions(1024, 768)
+    //                 .with_title(format!("Particle system in Rust ({} fps)", 30))
+    //                 .build_glium().unwrap();
+
+    let (width, height) = (1024, 768);
+    let win_builder = glutin::WindowBuilder::new()
+        .with_title("Particle system in Rust")
+        .with_dimensions(width, height)
+        .with_vsync();
+
+    let (window, mut device, mut factory, color, depth) =
+        gfx_window_glutin::init::<ColorFormat, DepthFormat>(win_builder);
+
+    let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
+
+    let particle_shader_set = factory.create_shader_set(
+        include_bytes!("shaders/particle.vert.glsl"),
+        include_bytes!("shaders/particle.frag.glsl"),
+    ).unwrap();
+
+    let road_pso = factory.create_pipeline_state(
+        &particle_shader_set,
+        gfx::Primitive::PointList,
+        gfx::state::Rasterizer {
+            front_face: gfx::state::FrontFace::CounterClockwise,
+            cull_face: gfx::state::CullFace::Nothing,
+            method: gfx::state::RasterMethod::Point,
+            offset: None,
+            samples: None, // Some(gfx::state::MultiSample)
+        },
+        pipe::new(),
+    ).unwrap();
 
     let device_type = DeviceType::from_bits_truncate(cl_h::CL_DEVICE_TYPE_GPU);
     let devices = Device::list(&Platform::default(), Some(device_type));

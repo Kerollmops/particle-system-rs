@@ -1,10 +1,14 @@
 #version 140
 
-uniform mat4 matrix;
+uniform Locals {
+    mat4 u_World;
+    mat4 u_Model;
+    mat4 u_View;
+};
 
-in vec4 position;
+in vec3 v_Position;
 
-out vec3 vColor;
+out vec3 f_Color;
 
 void main() {
     gl_Position = matrix * vec4(position.xyz, 1.0);
