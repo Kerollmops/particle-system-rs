@@ -14,7 +14,7 @@ use glium::{DisplayBuild, Surface};
 use glium::glutin::Event;
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::{Escape, Space};
-use ocl::{Device, Platform, Context, cl_h};
+use ocl::{Device, Platform, Context, flags};
 use ocl::core::{ContextProperties, DeviceType, DeviceInfo};
 use ocl::builders::DeviceSpecifier;
 use cgl::{CGLGetCurrentContext, CGLGetShareGroup};
@@ -47,8 +47,7 @@ fn main() {
                     .with_title(format!("Particle system in Rust ({} fps)", 30))
                     .build_glium().unwrap();
 
-    let device_type = DeviceType::from_bits_truncate(cl_h::CL_DEVICE_TYPE_GPU);
-    let devices = Device::list(&Platform::default(), Some(device_type));
+    let devices = Device::list(&Platform::default(), Some(flags::DEVICE_TYPE_GPU)).unwrap();
     let device = devices.first().expect("No device with specified types found.");
 
     println!("Device used: {:?}", device.info(DeviceInfo::Name));

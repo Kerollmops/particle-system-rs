@@ -1,3 +1,3 @@
-use ocl::aliases::ClFloat3;
+use ocl::prm::Float3;
 
-pub type Point = ClFloat3;
+pub type Point = Float3;

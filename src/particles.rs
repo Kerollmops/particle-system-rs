@@ -2,7 +2,7 @@ use std::result::Result;
 use glium::{VertexBuffer, GlObject, Program};
 use glium::backend::Facade;
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
-use ocl::aliases::ClFloat3;
+use ocl::prm::Float3;
 use ocl::core::MEM_READ_WRITE;
 use point::Point;
 
@@ -33,14 +33,14 @@ struct GlSide {
 }
 
 struct Animation {
-    from: Buffer<ClFloat3>,
-    to: Buffer<ClFloat3>,
+    from: Buffer<Float3>,
+    to: Buffer<Float3>,
     duration: f32
 }
 
 struct ClSide {
-    positions: Buffer<ClFloat3>,
-    velocities: Buffer<ClFloat3>,
+    positions: Buffer<Float3>,
+    velocities: Buffer<Float3>,
     animation: Animation,
     proque: ProQue
 }
@@ -71,17 +71,27 @@ impl Particles {
         let proque = ProQue::builder().context(context).prog_bldr(prog_bldr)
                         .device(device).dims([quantity]).build().unwrap();
 
+        let from = Buffer::builder()
+                          .queue(proque.queue().clone())
+                          .flags(MEM_READ_WRITE)
+                          .dims([quantity])
+                          .build().unwrap();
+
+        let to = Buffer::builder()
+                        .queue(proque.queue().clone())
+                        .flags(MEM_READ_WRITE)
+                        .dims([quantity])
+                        .build().unwrap();
+
+        let animation = Animation { from, to, duration: 0.0_f32, };
+
         let cl_side = ClSide {
-            positions: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
+            positions: Buffer::from_gl_buffer(proque.queue(), Some(MEM_READ_WRITE),
                         [quantity], gl_side.positions.get_id()).unwrap(),
-            velocities: Buffer::from_gl_buffer(&proque, Some(MEM_READ_WRITE),
+            velocities: Buffer::from_gl_buffer(proque.queue(), Some(MEM_READ_WRITE),
                         [quantity], gl_side.velocities.get_id()).unwrap(),
-            animation: Animation {
-                from: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
-                to: Buffer::new(&proque, Some(MEM_READ_WRITE), [quantity], None).unwrap(),
-                duration: 0.0_f32,
-            },
-            proque: proque
+            animation,
+            proque
         };
         Ok(Particles {
             quantity: quantity,
