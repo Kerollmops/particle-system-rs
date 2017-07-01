@@ -40,6 +40,9 @@ fn resize_window(width: u32, height: u32) {
     println!("resize: {:?}x{:?}", width, height);
 }
 
+use std::str::FromStr;
+use std::num::ParseIntError;
+
 fn main() {
     let (width, height) = (1024.0, 768.0);
     let display = glium::glutin::WindowBuilder::new()
@@ -59,9 +62,8 @@ fn main() {
                         .devices(DeviceSpecifier::Single(*device))
                         .build().unwrap();
 
-    let quantity: usize = env::args().nth(1)
-                            .unwrap_or(String::from("1000000")).parse()
-                            .unwrap_or_else(|err| { printlnc!(red: "{}", err); 1_000_000 });
+    let quantity: usize = env::args().nth(1).map_or(Ok(1_000_000), |x| FromStr::from_str(&x)).unwrap();
+
     let quantity = ((quantity / WARP_SIZE) + 1) * WARP_SIZE;
 
     let mut particles = match Particles::new(&display, context_cl, quantity) {

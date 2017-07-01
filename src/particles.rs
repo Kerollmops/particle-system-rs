@@ -83,21 +83,15 @@ impl Particles {
                         .dims([quantity])
                         .build().unwrap();
 
-        let animation = Animation { from, to, duration: 0.0_f32, };
-
         let cl_side = ClSide {
             positions: Buffer::from_gl_buffer(proque.queue(), Some(MEM_READ_WRITE),
                         [quantity], gl_side.positions.get_id()).unwrap(),
             velocities: Buffer::from_gl_buffer(proque.queue(), Some(MEM_READ_WRITE),
                         [quantity], gl_side.velocities.get_id()).unwrap(),
-            animation,
+            animation: Animation { from, to, duration: 0.0_f32, },
             proque
         };
-        Ok(Particles {
-            quantity: quantity,
-            gl_side: gl_side,
-            cl_side: cl_side
-        })
+        Ok(Particles { quantity, gl_side, cl_side })
     }
 
     pub fn init_rand_sphere_animation(&mut self, duration: f32) {
