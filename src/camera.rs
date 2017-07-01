@@ -23,6 +23,7 @@ impl<'a> Camera<'a> {
         let eye_pos = Point3::new(1.0, -0.25, -0.5);
         let target = Point3::new(0.0, 0.0, 0.0);
         let draw_parameters = DrawParameters {
+            // point_size: Some(2.0),
             depth: Depth {
                 test: DepthTest::IfLess,
                 write: true,

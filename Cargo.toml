@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Clément Renault <renault.cle@gmail.com>"]
 
 [dependencies]
-glium = "0.14"
+glium = "0.16"
 nalgebra = "0.8"
 cgl = "0.1"
 ocl = "0.14"

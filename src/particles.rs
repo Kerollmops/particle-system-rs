@@ -1,5 +1,6 @@
 use std::result::Result;
 use glium::{VertexBuffer, GlObject, Program};
+use glium::program::ProgramCreationInput;
 use glium::backend::Facade;
 use ocl::{Buffer, ProQue, Context, Program as ClProgram};
 use ocl::prm::Float3;
@@ -59,11 +60,21 @@ impl Particles {
             _ => ()
         }
 
+        let program = Program::new(facade, ProgramCreationInput::SourceCode {
+            vertex_shader: VERTEX_SRC,
+            tessellation_control_shader: None,
+            tessellation_evaluation_shader: None,
+            geometry_shader: None,
+            fragment_shader: FRAGMENT_SRC,
+            transform_feedback_varyings: None,
+            outputs_srgb: false,
+            uses_point_size: true
+        }).unwrap();
+
         let gl_side = GlSide {
             positions: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
             velocities: VertexBuffer::empty_dynamic(facade, quantity).unwrap(),
-            program: Program::from_source(facade, VERTEX_SRC, FRAGMENT_SRC,
-                        Some(GEOMETRY_SRC)).unwrap()
+            program
         };
 
         let prog_bldr = ClProgram::builder().src(PARTICLES_KERN_SRC);
